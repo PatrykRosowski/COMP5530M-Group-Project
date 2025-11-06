@@ -22,9 +22,9 @@ def get_bus_stop_data():
     return df_west_york_stops_simple.loc[df_west_york_stops_simple["StopType"] == BUS_STOP_TYPE]
 
 ## GET SPECIFIC STREET DATA 
-##def get_headrow_data():
-##    tabloo.show(df_west_york_stops_simple.loc[df_west_york_stops_simple['Street'] == 'The Headrow'])
+def get_street_data(Streets):
+    return df_west_york_stops_simple.loc[df_west_york_stops_simple['Street'].isin(Streets)]
 
 ## GET SPECIFIC STOP DATA
-##def get_specific_stop_data():
-##    tabloo.show(df_west_york_stops_simple.loc[df_west_york_stops_simple['ATCOCode'] == 450029158])
+def get_specific_stop_data(ATCOCode):
+    return df_west_york_stops_simple.loc[df_west_york_stops_simple['ATCOCode'] == ATCOCode]

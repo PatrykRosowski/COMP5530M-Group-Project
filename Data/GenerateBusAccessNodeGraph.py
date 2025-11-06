@@ -1,30 +1,41 @@
 from GetAccessNodes import get_bus_stop_data
+from GetTestData import get_test_data
 from AccessNode import AccessNode
 
 ## The degree distance for nearby bus stops
-DEGREE_DISTANCE = 0.003 ##~333m
+DEGREE_DISTANCE = 0.001 ##~111m increments
+## The number of the minimum bus stop edges for each bus stop
+MIN_NEARBY_STOPS = 4
 
+## Returns true if the target node is nearby the target node, depending on the iteration
+def addIfNearby(initialNode, targetNode, increment):
+    latitudeDifference = abs(initialNode.get_Latitude() - targetNode.get_Latitude())
+
+    if (latitudeDifference <= DEGREE_DISTANCE * increment):
+        longitudeDifference = abs(initialNode.get_Longitude() - targetNode.get_Longitude())
+
+        if (longitudeDifference <= DEGREE_DISTANCE * increment):
+            ## Add to nearby + add itself to nearby's list
+            initialNode.addNearbyStop(targetNode)
+            targetNode.addNearbyStop(initialNode) ## Bi-directional
+
+    return False
+
+## Returns completed bus access node graph
 def get_bus_access_node_graph():
-    df_data = get_bus_stop_data()
+    #df_data = get_bus_stop_data()
+    df_data = get_test_data()
     AccessNodeGraph = [AccessNode(data_row) for index, data_row in df_data.iterrows()]
-
-    ## Returns true if the stop is nearby
-    def isNearby(initialNode, targetNode):
-        latitudeDifference = abs(initialNode.get_Latitude() - targetNode.get_Latitude())
-
-        if latitudeDifference <= DEGREE_DISTANCE:
-            longitudeDifference = abs(initialNode.get_Longitude() - targetNode.get_Longitude())
-
-            if longitudeDifference <= DEGREE_DISTANCE:
-                return True
-
-        return False
 
     ## Generating arrays of all nearby stops for each stop
     for accessNode in AccessNodeGraph:
-        nearbyStops = [node for node in AccessNodeGraph if (isNearby(accessNode, node))]
-        for stop in nearbyStops:
-            accessNode.addNearbyStop(stop)
+        for increment in range(1, 60):
+            if len(accessNode.get_Nearby()) >= MIN_NEARBY_STOPS:
+                break
+
+            ## Adding all nearby nodes
+            for node in AccessNodeGraph:
+                addIfNearby(accessNode, node, increment)
     
     return AccessNodeGraph
 

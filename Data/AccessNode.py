@@ -26,4 +26,6 @@ class AccessNode:
         return self.Nearby
     
     def addNearbyStop(self, nearbyStop):
-        self.Nearby.append(nearbyStop)
+        ## Check if nearby stop is already in the list
+        if not nearbyStop in self.Nearby:
+            self.Nearby.append(nearbyStop)
