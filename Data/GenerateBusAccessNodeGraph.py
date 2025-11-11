@@ -46,7 +46,9 @@ def get_bus_access_node_graph():
 
             ## Adding all nearby nodes
             for node in AccessNodeGraph:
-                addIfNearby(accessNode, node, increment)
+                ## Don't want each node adding itself
+                if node != accessNode:
+                    addIfNearby(accessNode, node, increment)
 
             if len(accessNode.get_Nearby()) >= MIN_NEARBY_STOPS:
                 break
