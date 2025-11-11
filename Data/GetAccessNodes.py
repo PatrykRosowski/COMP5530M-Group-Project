@@ -28,6 +28,3 @@ def get_street_data(Streets):
 ## GET SPECIFIC STOP DATA
 def get_specific_stop_data(ATCOCode):
     return df_west_york_stops_simple.loc[df_west_york_stops_simple['ATCOCode'] == ATCOCode]
-
-print(get_specific_stop_data(450025317))
-print(get_specific_stop_data(450032243))
