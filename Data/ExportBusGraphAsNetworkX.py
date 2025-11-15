@@ -14,11 +14,11 @@ from GenerateBusAccessNodeGraph import get_bus_access_node_graph
 # Weight: Distance in long and lat between nodes (Pythagoras)
 
 ## Draw the network graph
-def draw_networkx_graph(G):
+def draw_networkx_graph(G, edge_para='weight'):
     ax = plt.subplot()
     pos = nx.spring_layout(G) # easier to understand graph layout (nodes repel each other)
     nx.draw(G, pos, node_size=50)
-    edge_labels = nx.get_edge_attributes(G, 'weight')
+    edge_labels = nx.get_edge_attributes(G, edge_para)
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
 
     plt.show()
@@ -56,8 +56,25 @@ def get_bus_graph_networkx():
 
     ## Save graph as graphml - ungku   
     #nx.write_graphml_lxml(G, "bus_graph.graphml")
-    draw_networkx_graph(G)
+
     ## Return graph as networkx format
     return G
 
-get_bus_graph_networkx()
+def convert_bus_graph_time():
+
+    G = get_bus_graph_networkx()
+
+    ASSUMED_SPEED = 25.0 # in KPH
+    DISTANCE_KEY = 'weight'
+    TIME_KEY = 'travel_time'
+
+    for u, v, data in G.edges(data=True):
+        
+        if DISTANCE_KEY in data:
+            distance = float(data[DISTANCE_KEY])
+            travel_time = round(((distance/ASSUMED_SPEED) * 3600), 2) # convert to seconds 
+            data[TIME_KEY] = travel_time
+        else:
+            print(f'Edge ({u}, {v}) missing {DISTANCE_KEY} attribute.')
+
+    return G
