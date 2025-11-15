@@ -46,12 +46,9 @@ def get_bus_graph_networkx():
             G.add_edge(accessNode.get_ATCOCode(),
                        neighbour.get_ATCOCode(),
                        weight=get_weight(accessNode, neighbour))
-            
-    ## Drawing graph
-    #draw_networkx_graph(G)
+
+    ## Save graph as graphml - ungku   
+    #nx.write_graphml_lxml(G, "bus_graph.graphml")
 
     ## Return graph as networkx format
     return G
-
-
-get_bus_graph_networkx()
