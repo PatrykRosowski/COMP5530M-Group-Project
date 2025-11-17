@@ -1,6 +1,6 @@
 import utils
 import networkx as nx
-from random import randint
+from random import randint, choice
 from itertools import product
 
 def select_random_nodes(G: nx.DiGraph, X: float) -> tuple[nx.nodes, nx.nodes]:
@@ -27,11 +27,51 @@ def shortest_distance_to_path(G: nx.DiGraph, node: nx.nodes, path_nodes: list[st
     
     return min_distance
 
-def generate_od_pairs(G: nx.DiGraph, config: tuple, M: int, Y: float) -> list[tuple]:
-    return None
+def get_nodes_covered_by_config(config: tuple) -> set:
+    nodes = set()
+    for path in config:
+        if path:
+            nodes.update(path)
+    return nodes
 
-def generate_network_config(all_line_candidates):
-    return None
+def generate_network_config(all_line_candidates: dict) -> list[tuple]:
+    all_lists_of_lines = []
+    for mode in all_line_candidates:
+        all_lists_of_lines.extend(all_lists_of_lines[mode])
+
+    if not all_lists_of_lines:
+        return []
+    
+    return list(product(*all_lists_of_lines))
+
+def generate_od_pairs(G: nx.DiGraph, config: tuple, M: int, Y: float) -> list[tuple]:
+    covered_nodes = list(get_nodes_covered_by_config(config))
+    all_nodes = list(G.nodes)
+    od_pairs = set()
+
+    if not covered_nodes:
+        return []
+    
+    attempts = 0
+    max_attempts = M * 100
+
+    while len(od_pairs) < M and attempts < max_attempts:
+        start_node = choice(covered_nodes)
+        end_node = choice(all_nodes)
+
+        if start_node == end_node:
+            attempts += 1
+            continue
+
+        if utils.get_node_distance(start_node, end_node) >= Y:
+            od_pairs.add((start_node, end_node))
+
+        attempts += 1
+
+    if len(od_pairs) < M:
+        print(f'Could only find {len(od_pairs)} OD pairs')
+
+    return list(od_pairs)
 
 
 def compute_mesp(G: nx.DiGraph, start_route: nx.nodes, end_route: nx.nodes, K: int) -> list[str]:
