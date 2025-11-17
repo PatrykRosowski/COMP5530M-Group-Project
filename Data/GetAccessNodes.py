@@ -1,5 +1,4 @@
 import naptan
-import tabloo
 
 AREA_CODE = '450'
 BUS_STOP_TYPE = 'BCT'

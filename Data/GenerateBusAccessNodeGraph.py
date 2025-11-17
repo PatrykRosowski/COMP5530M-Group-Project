@@ -1,4 +1,3 @@
-from GetAccessNodes import get_bus_stop_data
 from GetTestData import get_test_data
 from AccessNode import AccessNode
 
@@ -54,5 +53,3 @@ def get_bus_access_node_graph():
                 break
     
     return AccessNodeGraph
-
-get_bus_access_node_graph()

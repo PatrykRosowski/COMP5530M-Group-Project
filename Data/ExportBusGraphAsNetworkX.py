@@ -52,6 +52,3 @@ def get_bus_graph_networkx():
 
     ## Return graph as networkx format
     return G
-
-
-get_bus_graph_networkx()
