@@ -1,4 +1,4 @@
-from GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from Data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 import matplotlib.pyplot as plt
 
 ## Plotting a map of the whole graph including edges

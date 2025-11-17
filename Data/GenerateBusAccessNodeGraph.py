@@ -1,6 +1,6 @@
-from GetAccessNodes import get_bus_stop_data
-from GetTestData import get_test_data
-from AccessNode import AccessNode
+from Data.GetAccessNodes import get_bus_stop_data
+from Data.GetTestData import get_test_data
+from Data.AccessNode import AccessNode
 
 ## The degree distance for nearby bus stops
 DEGREE_DISTANCE = 0.003 ##~333m increments

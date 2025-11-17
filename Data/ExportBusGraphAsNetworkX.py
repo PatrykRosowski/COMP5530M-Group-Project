@@ -2,7 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import math
 from haversine import haversine, Unit
-from GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from Data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 ## Graph format
 # Node       {ATCOCode: int}
@@ -78,3 +78,5 @@ def convert_bus_graph_time():
             print(f'Edge ({u}, {v}) missing {DISTANCE_KEY} attribute.')
 
     return G
+
+convert_bus_graph_time()
