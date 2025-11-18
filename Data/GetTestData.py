@@ -9,14 +9,23 @@ from Data.GetAccessNodes import get_street_data
 ##           'StopType']
 
 def get_test_data():
+    '''
     test_streets = ['The Headrow',
-                    'Woodhouse Lane',
+                    'Woodhouse Lane', # disconnected
                     'Headingley Lane',
-                    'Wellington Street',
-                    'Vicar Lane',
+                    'Wellington Street', # disconnected
+                    'Vicar Lane', # disconnected
                     'Boar Lane',
                     'Park Row',
-                    'Burley Road',
+                    'Infirmary Street',
+                    'Burley Road', # disconnected
                     'Kirkstall Road']
+    '''
+    test_streets = ['The Headrow',
+                    'Park Row',
+                    'Boar Lane',
+                    'Infirmary Street']
+    
+
     
     return get_street_data(test_streets)

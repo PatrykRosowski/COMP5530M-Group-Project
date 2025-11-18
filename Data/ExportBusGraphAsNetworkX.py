@@ -78,5 +78,3 @@ def convert_bus_graph_time():
             print(f'Edge ({u}, {v}) missing {DISTANCE_KEY} attribute.')
 
     return G
-
-convert_bus_graph_time()

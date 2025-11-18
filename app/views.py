@@ -13,17 +13,36 @@ def index():
 
 @app.route('/main')
 def main():
+    """
+    Main execution route for generating and optimizing bus line networks.
+
+    This function orchestrates the generation of candidate routes using the MESP algorithm,
+    creates network configurations, and evaluates them based on random OD pair latency.
+
+    Configuration (Internal Constants):
+        The following hardcoded variables within the function control the simulation:
+        - num_lines (int): Number of lines to generate (set to 2).
+        - N (int): Number of candidate routes to generate per line (set to 5).
+        - X (float): Minimum distance in km for a route's start/end points (set to 0.5).
+        - Y (float): Minimum distance in km for test OD pairs (set to 0.3).
+        - K (int): Number of shortest paths to evaluate in Yen's algorithm (set to 5).
+        - M (int): Number of random OD pairs to test per configuration (set to 10).
+
+    Returns:
+        list: A list containing the best network configuration (tuple) 
+              and its corresponding max latency (float).
+    """
     G = convert_bus_graph_time()
 
     all_line_candidates = {}
     all_line_candidates['bus'] = [] # assume only single mode of transport
 
-    num_lines = 2 # num of lines to generate
-    N = 5 # num of candidate route per line
-    X = 0.5 # min distance (kilometers)
-    Y = 0.3 # min threshold for valid o-d pairs (kilometers)
-    K = 5 # k value for yen's shortest path
-    M = 10 # num of o-d pairs to test per config
+    num_lines = 2
+    N = 5
+    X = 0.5 
+    Y = 0.3 
+    K = 5 
+    M = 10 
 
     for line_index in range(num_lines):
         print(f'Generating {N} candidates for bus line {line_index + 1}')
@@ -56,16 +75,26 @@ def main():
         od_pairs = line_generator.generate_od_pairs(G, config, M, Y)
         max_latency = 0
 
-        for origin, destination in od_pairs:
-            path = nx.astar_path(G, origin, destination, weight='travel_time')
-            latency = utils.calculate_path_latency(G, path)
+        if not od_pairs:
+            max_latency = float('inf') # if no od pairs found, config is untestable
 
-        if latency > max_latency:
-            max_latency = latency
+        for origin, destination in od_pairs:
+            try:
+                path = nx.astar_path(G, origin, destination, weight='travel_time')
+                latency = utils.calculate_path_latency(G, path)
+            except nx.NetworkXNoPath:
+                latency = float('inf') # no path thus impossible trip
+
+            if latency > max_latency:
+                max_latency = latency
+
+            if max_latency == float('inf'):
+                break
 
         if max_latency < best_latency:
             best_latency = max_latency
             best_config = config
+
     print('Complete')
 
     return [best_config, best_latency]
