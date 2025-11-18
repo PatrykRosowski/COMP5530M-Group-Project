@@ -17,3 +17,5 @@ def map_bus_access_node_graph():
         
 
     plt.show()
+
+map_bus_access_node_graph()
