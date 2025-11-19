@@ -5,3 +5,7 @@ matplotlibx
 naptan
 tabloo
 haversine
+flask-cors
+flake8
+flake8-black
+black

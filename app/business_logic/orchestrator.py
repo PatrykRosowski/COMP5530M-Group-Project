@@ -1,18 +1,16 @@
-from flask import Flask
-from app import app
-
-from app.data.ExportBusGraphAsNetworkX import convert_bus_graph_time
-
 import networkx as nx
-from . import utils
-from . import line_generator
 
-@app.route('/')
-def index():
-    return "Server is running"
+from app.algorithm_engine.path_finder import compute_least_eccentric_path
+from app.utils.graph_helpers import calculate_path_latency
+from app.business_logic.scenario_generator import (
+    select_random_nodes,
+    generate_network_config,
+    generate_od_pairs,
+)
+from ..data.ExportBusGraphAsNetworkX import convert_bus_graph_time
 
-@app.route('/main')
-def main():
+
+def route_calculation() -> tuple[tuple, int]:
     """
     Main execution route for generating and optimizing bus line networks.
 
@@ -29,72 +27,72 @@ def main():
         - M (int): Number of random OD pairs to test per configuration (set to 10).
 
     Returns:
-        list: A list containing the best network configuration (tuple) 
+        list: A list containing the best network configuration (tuple)
               and its corresponding max latency (float).
     """
     G = convert_bus_graph_time()
 
     all_line_candidates = {}
-    all_line_candidates['bus'] = [] # assume only single mode of transport
+    all_line_candidates["bus"] = []
 
     num_lines = 2
     N = 5
-    X = 0.5 
-    Y = 0.3 
-    K = 5 
-    M = 10 
+    X = 0.5
+    Y = 0.3
+    K = 5
+    M = 10
 
     for line_index in range(num_lines):
-        print(f'Generating {N} candidates for bus line {line_index + 1}')
+        print(f"Generating {N} candidates for bus line {line_index + 1}")
         line_candidates = []
 
         for i in range(N):
-            (A, B) = line_generator.select_random_nodes(G, X)
-            print(f'Node selected {A}, {B}')
+            (A, B) = select_random_nodes(G, X)
+            print(f"Node selected {A}, {B}")
 
-            print(f'Computing MESP - round {i}')
-            path = line_generator.compute_least_eccentric_path(G, A, B, K)
-            print(f'Complete round {i}')
+            print(f"Computing MESP - round {i}")
+            path = compute_least_eccentric_path(G, A, B, K)
+            print(f"Complete round {i}")
             if path:
                 line_candidates.append(path)
             else:
-                print(f'compute_mesp found no path for candidate {i+1}')
+                print(f"compute_mesp found no path for candidate {i+1}")
 
-        all_line_candidates['bus'].append(line_candidates)
+        all_line_candidates["bus"].append(line_candidates)
 
-    print('All line candidates generated')
+    print("All line candidates generated")
 
-    print('Generating network config')
-    all_network_config = line_generator.generate_network_config(all_line_candidates)
-    print('Network config generation completed')
-    best_latency = float('inf')
+    print("Generating network config")
+    all_network_config = generate_network_config(all_line_candidates)
+    print("Network config generation completed")
+    best_latency = float("inf")
     best_config = None
 
-    print('Testing OD pairs')
+    print("Testing OD pairs")
     for config in all_network_config:
-        od_pairs = line_generator.generate_od_pairs(G, config, M, Y)
+        od_pairs = generate_od_pairs(G, config, M, Y)
         max_latency = 0
 
         if not od_pairs:
-            max_latency = float('inf') # if no od pairs found, config is untestable
+            max_latency = float("inf")  # if no od pairs found, config is untestable
 
         for origin, destination in od_pairs:
             try:
-                path = nx.astar_path(G, origin, destination, weight='travel_time')
-                latency = utils.calculate_path_latency(G, path)
+                path = nx.astar_path(G, origin, destination, weight="travel_time")
+                latency = calculate_path_latency(G, path)
             except nx.NetworkXNoPath:
-                latency = float('inf') # no path thus impossible trip
+                latency = float("inf")  # no path thus impossible trip
 
             if latency > max_latency:
                 max_latency = latency
 
-            if max_latency == float('inf'):
+            if max_latency == float("inf"):
                 break
 
         if max_latency < best_latency:
             best_latency = max_latency
             best_config = config
 
-    print('Complete')
+    print("Complete")
 
     return [best_config, best_latency]

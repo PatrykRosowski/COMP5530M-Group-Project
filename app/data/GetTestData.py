@@ -8,8 +8,9 @@ from app.data.GetAccessNodes import get_street_data
 ##           'Latitude',
 ##           'StopType']
 
+
 def get_test_data():
-    '''
+    """
     test_streets = ['The Headrow',
                     'Woodhouse Lane', # disconnected
                     'Headingley Lane',
@@ -20,12 +21,7 @@ def get_test_data():
                     'Infirmary Street',
                     'Burley Road', # disconnected
                     'Kirkstall Road']
-    '''
-    test_streets = ['The Headrow',
-                    'Park Row',
-                    'Boar Lane',
-                    'Infirmary Street']
-    
+    """
+    test_streets = ["The Headrow", "Park Row", "Boar Lane", "Infirmary Street"]
 
-    
     return get_street_data(test_streets)
