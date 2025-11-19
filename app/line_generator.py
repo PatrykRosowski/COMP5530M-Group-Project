@@ -148,7 +148,7 @@ def generate_od_pairs(G: nx.DiGraph, config: tuple, M: int, Y: float) -> list[tu
     return list(od_pairs)
 
 
-def compute_mesp(G: nx.DiGraph, start_route: nx.nodes, end_route: nx.nodes, K: int) -> list[str]:
+def compute_least_eccentric_path(G: nx.DiGraph, start_route: nx.nodes, end_route: nx.nodes, K: int) -> list[str]:
     """
     Computes a path that minimizes the maximum eccentricity (distance) from all other nodes 
     in the graph to the path, chosen from the K shortest paths.

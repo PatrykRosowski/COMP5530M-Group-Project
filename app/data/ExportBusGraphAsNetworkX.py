@@ -2,7 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import math
 from haversine import haversine, Unit
-from Data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 ## Graph format
 # Node       {ATCOCode: int}

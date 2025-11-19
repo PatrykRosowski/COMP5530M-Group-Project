@@ -1,7 +1,7 @@
 from flask import Flask
 from app import app
 
-from Data.ExportBusGraphAsNetworkX import convert_bus_graph_time
+from app.data.ExportBusGraphAsNetworkX import convert_bus_graph_time
 
 import networkx as nx
 from . import utils
@@ -53,7 +53,7 @@ def main():
             print(f'Node selected {A}, {B}')
 
             print(f'Computing MESP - round {i}')
-            path = line_generator.compute_mesp(G, A, B, K)
+            path = line_generator.compute_least_eccentric_path(G, A, B, K)
             print(f'Complete round {i}')
             if path:
                 line_candidates.append(path)
