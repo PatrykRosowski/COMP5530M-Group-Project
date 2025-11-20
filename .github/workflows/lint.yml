@@ -1,0 +1,31 @@
+name: Python Lint Check
+
+on:
+  push:
+    branches: ["**"]      # run on ALL branches
+  pull_request:
+    branches: ["**"]      # run on ALL PRs
+
+jobs:
+  lint:
+    name: 🧹 Lint & Formatting Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name:  📦 Install Dependencies (Black + Flake8)
+        run: |
+          pip install black flake8
+
+      - name: 🎨 Black Code Style Check
+        run: black --check .
+
+      - name: 🔍 Flake8 Lint Check
+        run: flake8 .

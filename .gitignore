@@ -16,3 +16,20 @@
 # Ignore all local history of files
 .history
 .ionide
+
+### Flask ###
+.venv/
+.env
+
+*.pyc
+__pycache__/
+
+instance/
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+dist/
+build/
+*.egg-info/
