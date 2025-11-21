@@ -35,8 +35,8 @@ def get_node_distance(G: nx.DiGraph, origin_node: nx.nodes, dist_node: nx.nodes)
     """
     return round(
         haversine(
-            (origin_node["Longitude"], origin_node["Latitude"]),
-            (dist_node["Longitude"], dist_node["Latitude"]),
+            (origin_node["Latitude"], origin_node["Longitude"]),
+            (dist_node["Latitude"], dist_node["Longitude"]),
             unit=Unit.KILOMETERS,
         ),
         2,
@@ -74,13 +74,19 @@ def _get_straight_line_fallback(locations: list[tuple]):
     }
 
 def get_shape_for_stop_sequence(G: nx.DiGraph, node_ids: list[str]) -> str:
+    print(f"DEBUG: Routing shape for sequence: {node_ids}")
     locations = []
-    for node in node_ids:
+    for i, node in enumerate(node_ids):
         node_data = G.nodes[node]
+        location_type = 'break'
+
+        if 0 < i < len(node_ids) - 1: 
+            location_type = 'through' # use 'through' mode for intermediate stops
+
         locations.append({
             'lat': node_data['Latitude'],
             'lon': node_data['Longitude'],
-            'type': 'break' # tell the engine that the bus need to enter the stop area
+            'type': location_type,
         })
 
     payload = {
@@ -96,13 +102,17 @@ def get_shape_for_stop_sequence(G: nx.DiGraph, node_ids: list[str]) -> str:
         response.raise_for_status()
         data = response.json()
 
-        encoded_shape = data['trip']['legs'][0]['shape']
         all_coordinates = []
 
-        for leg in data['trip']['legs']:
+
+        for i, leg in enumerate(data['trip']['legs']):
             decoded_points = polyline.decode(leg['shape'], 6)
             geojson_points = [[lon, lat] for lat, lon in decoded_points]
-            all_coordinates.extend(geojson_points)
+
+            if i > 0:
+                all_coordinates.extend(geojson_points[1:])
+            else:
+                all_coordinates.extend(geojson_points)
 
         return {
             'type': 'Feature',
@@ -117,4 +127,5 @@ def get_shape_for_stop_sequence(G: nx.DiGraph, node_ids: list[str]) -> str:
     
     except Exception as e:
         print(f'Error routing path: {e}')
-        return _get_straight_line_fallback
+        print(f"DEBUG: Fallback triggered for nodes: {node_ids}")
+        return _get_straight_line_fallback(locations)

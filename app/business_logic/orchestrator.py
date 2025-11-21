@@ -36,7 +36,7 @@ def route_calculation() -> tuple[tuple, int]:
     all_line_candidates = {}
     all_line_candidates["bus"] = []
 
-    num_lines = 3
+    num_lines = 2
     N = 5
     X = 0.5
     Y = 0.3
@@ -117,6 +117,18 @@ def route_calculation() -> tuple[tuple, int]:
             'lon': node_data['Longitude'],
             'name': node_data['CommonName']
         })
+
+    print("\n" + "="*30)
+    print(f"FINAL CONFIGURATION (Latency: {best_latency})")
+    for i, line_path in enumerate(best_config):
+        print(f"\nBus Line {i + 1}:")
+        print(f"  Stop Count: {len(line_path)}")
+        print(f"  Stop IDs:   {line_path}")
+        
+        # Optional: Print names if available to make it readable
+        names = [G.nodes[n].get('CommonName', 'Unknown') for n in line_path]
+        print(f"  Stop Names: {names}")
+    print("="*30 + "\n")
 
     return frontend_response
 
