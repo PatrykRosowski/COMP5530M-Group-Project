@@ -33,3 +33,6 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+### Valhall and Docker ###
+routing_engine/*
