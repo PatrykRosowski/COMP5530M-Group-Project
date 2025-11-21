@@ -1,0 +1,14 @@
+services:
+  valhalla:
+    image: ghcr.io/gis-ops/docker-valhalla:latest
+    container_name: valhalla
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./routing_engine:/custom_files
+    environment:
+      - tile_urls=https://download.geofabrik.de/europe/united-kingdom/england/west-yorkshire-latest.osm.pbf
+      
+      - build_elevation=False
+      - build_admins=False
+      - build_time_zones=False
