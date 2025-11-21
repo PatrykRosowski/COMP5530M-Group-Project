@@ -1,7 +1,8 @@
 import networkx as nx
+from flask import jsonify
 
 from app.algorithm_engine.path_finder import compute_least_eccentric_path
-from app.utils.graph_helpers import calculate_path_latency
+from app.utils.graph_helpers import calculate_path_latency, get_shape_for_stop_sequence
 from app.business_logic.scenario_generator import (
     select_random_nodes,
     generate_network_config,
@@ -95,4 +96,15 @@ def route_calculation() -> tuple[tuple, int]:
 
     print("Complete")
 
-    return [best_config, best_latency]
+    frontend_response = {
+        'latency': best_latency,
+        'lines': []
+    }
+
+    for path_of_nodes in best_config:
+        geometry = get_shape_for_stop_sequence(G, path_of_nodes)
+        frontend_response['lines'].append(geometry)
+
+    return frontend_response
+
+

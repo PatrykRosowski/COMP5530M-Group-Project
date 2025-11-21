@@ -19,3 +19,18 @@ This is the GitHub Repo for COMP5530M Group Project.
 5. run server
 - `flask run`
 - if failed - `python3 run.py`
+6. complete
+- server url `127.0.0.1:5000`
+
+
+## Routing engine setup
+1. install docker desktop or docker on your cli
+- make sure docker is installed properlly `docker --version`
+2. setup the docker container
+- `docker-compose up valhalla`
+3. wait few minutes for map building
+- server url `127.0.0.1:8002`
+- to check server status `127.0.0.1:8000/status`
+4. other commands
+- to start server `docker start valhalla`
+- to stop server `docker stop valhalla`

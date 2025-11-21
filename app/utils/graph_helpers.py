@@ -1,6 +1,10 @@
 import networkx as nx
+import requests
+import json
+import polyline
 from haversine import haversine, Unit
 
+VALHALLA_URL = "http://localhost:8002/route"
 
 def edge_cost_fn(edge: nx.edges, edge_para="travel_time") -> float:
     """
@@ -57,3 +61,60 @@ def calculate_path_latency(G: nx.DiGraph, path: list[str], transfer_penalty=None
         latency += edge_att[(path[i], path[i + 1])]
 
     return latency
+
+def _get_straight_line_fallback(locations: list[tuple]):
+    coords = [[loc['lon'], loc['lat']] for loc in locations]
+    return {
+        'type': 'Feature',
+        'geometry': {
+            'type': 'LineString',
+            'coordinates': coords
+        },
+        'properties': {'error': 'Routing failed, used straight lines'}
+    }
+
+def get_shape_for_stop_sequence(G: nx.DiGraph, node_ids: list[str]) -> str:
+    locations = []
+    for node in node_ids:
+        node_data = G.nodes[node]
+        locations.append({
+            'lat': node_data['Latitude'],
+            'lon': node_data['Longitude'],
+            'type': 'break' # tell the engine that the bus need to enter the stop area
+        })
+
+    payload = {
+        'locations': locations,
+        'costing': 'bus',
+        'directions_options': {
+            'units': 'km'
+        }
+    }
+
+    try:
+        response = requests.post(VALHALLA_URL, data=json.dumps(payload))
+        response.raise_for_status()
+        data = response.json()
+
+        encoded_shape = data['trip']['legs'][0]['shape']
+        all_coordinates = []
+
+        for leg in data['trip']['legs']:
+            decoded_points = polyline.decode(leg['shape'], 6)
+            geojson_points = [[lon, lat] for lat, lon in decoded_points]
+            all_coordinates.extend(geojson_points)
+
+        return {
+            'type': 'Feature',
+            'properties': {
+                'order': node_ids
+            },
+            'geometry': {
+                'type': 'LineString',
+                'coordinates': all_coordinates
+            }
+        }
+    
+    except Exception as e:
+        print(f'Error routing path: {e}')
+        return _get_straight_line_fallback
