@@ -36,7 +36,7 @@ def route_calculation() -> tuple[tuple, int]:
     all_line_candidates = {}
     all_line_candidates["bus"] = []
 
-    num_lines = 2
+    num_lines = 3
     N = 5
     X = 0.5
     Y = 0.3
@@ -98,12 +98,25 @@ def route_calculation() -> tuple[tuple, int]:
 
     frontend_response = {
         'latency': best_latency,
-        'lines': []
+        'lines': [],
+        'stops': []
     }
 
     for path_of_nodes in best_config:
         geometry = get_shape_for_stop_sequence(G, path_of_nodes)
         frontend_response['lines'].append(geometry)
+
+    unique_nodes = set(node for path in best_config for node in path)
+
+    for node_id in unique_nodes:
+        node_data = G.nodes[node_id]
+
+        frontend_response['stops'].append({
+            'id': node_id,
+            'lat': node_data['Latitude'],
+            'lon': node_data['Longitude'],
+            'name': node_data['CommonName']
+        })
 
     return frontend_response
 

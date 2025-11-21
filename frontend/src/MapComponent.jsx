@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup } from 'react-leaflet'; // Added CircleMarker, Popup
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 
 const MapComponent = () => {
   const [apiData, setApiData] = useState({ 
     lines: [], 
+    stops: [], // Added stops to initial state
     latency: null 
   });
   const [loading, setLoading] = useState(true);
@@ -37,9 +38,9 @@ const MapComponent = () => {
   return (
     <div className="relative h-screen w-screen bg-slate-50 overflow-hidden">
       
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-1000">
+      {/* HUD / Status Bar */}
+      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[1000]">
         <div className="bg-white/90 backdrop-blur-sm shadow-lg border border-slate-200 rounded-full px-6 py-3 flex items-center gap-4 transition-all">
-          
           {loading ? (
             <div className="flex items-center gap-2 text-slate-600 text-sm font-medium">
                <svg className="animate-spin h-5 w-5 text-slate-500" viewBox="0 0 24 24">
@@ -52,7 +53,7 @@ const MapComponent = () => {
              apiData.latency && (
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Max Latency</span>
-                  <div className="h-4 w-px bg-slate-300"></div> {/* Separator */}
+                  <div className="h-4 w-px bg-slate-300"></div>
                   <span className="text-emerald-600 font-mono text-lg font-bold leading-none">
                     {apiData.latency.toFixed(2)}s
                   </span>
@@ -67,30 +68,44 @@ const MapComponent = () => {
           center={[53.79725, -1.54384]} 
           zoom={15} 
           className="h-full w-full outline-none"
-          zoomControl={false} // Optional: removes zoom +/- buttons for a cleaner look
+          zoomControl={false} 
         >
           <TileLayer
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
 
+          {/* 1. Render Lines */}
           {!loading && apiData.lines && apiData.lines.map((lineGeoJson, index) => (
             <GeoJSON 
               key={`line-${index}`} 
               data={lineGeoJson} 
               style={getLineStyle(index)}
-              onEachFeature={(feature, layer) => {
-                if (feature.properties?.order) {
-                  layer.bindPopup(`
-                    <div style="font-family: system-ui;">
-                      <strong style="color: #334155;">Line ${index + 1}</strong><br/>
-                      <span style="color: #64748b;">${feature.properties.order.length} Stops</span>
-                    </div>
-                  `);
-                }
-              }}
             />
           ))}
+
+          {/* 2. Render Stops */}
+          {!loading && apiData.stops && apiData.stops.map((stop) => (
+            <CircleMarker
+              key={stop.id}
+              center={[stop.lat, stop.lon]}
+              radius={5}
+              pathOptions={{ 
+                color: '#475569',   // Slate-600 border
+                fillColor: '#ffffff', // White fill
+                fillOpacity: 1,
+                weight: 2
+              }}
+            >
+              <Popup>
+                <div className="font-sans p-1">
+                  <div className="font-bold text-slate-700 text-sm">{stop.name}</div>
+                  <div className="text-xs text-slate-400">Stop ID: {stop.id}</div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
+
         </MapContainer>
       </div>
     </div>
