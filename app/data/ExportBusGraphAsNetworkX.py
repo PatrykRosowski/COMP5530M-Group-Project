@@ -1,6 +1,5 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import math
 from haversine import haversine, Unit
 from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
