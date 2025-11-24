@@ -1,5 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import requests
+from pathlib import Path
 from haversine import haversine, Unit
 from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
@@ -12,6 +14,10 @@ from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 #
 # Weight: Distance in long and lat between nodes
 
+# URL for getting routing time requests
+OSRM_URL = "http://router.project-osrm.org/route/v1/driving/"
+ROOT_DIR = Path(__file__).resolve().parent.parent
+
 
 # Draw the network graph
 def draw_networkx_graph(G, edge_para="weight"):
@@ -23,8 +29,18 @@ def draw_networkx_graph(G, edge_para="weight"):
     plt.show()
 
 
+# Returns the time taken to travel from the initial node to the target node
+def get_weight(initialNode, targetNode):
+
+    response = requests.post(
+        f"{OSRM_URL}{initialNode.Longitude},{initialNode.Latitude};{targetNode.Longitude},{targetNode.Latitude}"
+    )
+    responseJson = response.json()
+    return responseJson.get("routes")[0].get("duration")
+
+
 # Returns the distance in kilometers using the haversine module
-def get_weight_haversine(initialNode, targetNode):
+def get_distance_haversine(initialNode, targetNode):
 
     return round(
         haversine(
@@ -58,7 +74,7 @@ def get_bus_graph_networkx():
             G.add_edge(
                 accessNode.get_ATCOCode(),
                 neighbour.get_ATCOCode(),
-                weight=get_weight_haversine(accessNode, neighbour),
+                weight=get_distance_haversine(accessNode, neighbour),
             )
 
     # Save graph as graphml - ungku

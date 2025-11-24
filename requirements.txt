@@ -9,3 +9,5 @@ flask-cors
 flake8
 flake8-black
 black
+pathlib
+requests
