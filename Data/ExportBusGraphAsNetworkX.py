@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import math
+import requests
+from pathlib import Path
 from GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 ## Graph format
@@ -12,19 +13,28 @@ from GenerateBusAccessNodeGraph import get_bus_access_node_graph
 #
 # Weight: Distance in long and lat between nodes (Pythagoras)
 
+## URL for getting routing time requests
+OSRM_URL = "http://router.project-osrm.org/route/v1/driving/"
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SAVE_FILE = ROOT_DIR / "Data" / "graph" / "BusGraph.graphml"
+
 ## Draw the network graph
 def draw_networkx_graph(G):
     ax = plt.subplot()
-    nx.draw(G, with_labels=True)
+    pos = nx.random_layout(G)
+    nx.draw(G, pos, with_labels=True)
+    
+    weightLabels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=weightLabels)
 
     plt.show()
 
 ## Return the weight of each edge between nodes, which uses distance and Pythagoras' Theorem
 def get_weight(initialNode, targetNode):
-    latitudeSquared = (initialNode.get_Latitude() - targetNode.get_Latitude()) ** 2
-    longitudeSquared = (initialNode.get_Longitude() - targetNode.get_Longitude()) ** 2
 
-    return math.sqrt(latitudeSquared + longitudeSquared) # Pythagoras' Theorem
+    response = requests.post(f'{OSRM_URL}{initialNode.Longitude},{initialNode.Latitude};{targetNode.Longitude},{targetNode.Latitude}')
+    responseJson = response.json()
+    return responseJson.get('routes')[0].get('duration')
 
 ## Returns networkx bus access node graph with weights
 def get_bus_graph_networkx():
@@ -48,7 +58,9 @@ def get_bus_graph_networkx():
                        weight=get_weight(accessNode, neighbour))
             
     ## Drawing graph
-    #draw_networkx_graph(G)
+    draw_networkx_graph(G)
 
     ## Return graph as networkx format
-    return G
+    nx.write_graphml(G, SAVE_FILE)
+
+get_bus_graph_networkx()

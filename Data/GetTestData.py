@@ -18,9 +18,7 @@ def get_test_data():
     #                'Park Row',
     #                'Burley Road',
     #                'Kirkstall Road']
-    test_streets = ['The Headrow',
-                    'Park Row',
-                    'Boar Lane',
+    test_streets = ['Boar Lane',
                     'Infirmary Street']
     
     return get_street_data(test_streets)
