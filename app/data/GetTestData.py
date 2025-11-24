@@ -1,12 +1,12 @@
 from app.data.GetAccessNodes import get_street_data
 
-## Data Structure
-##COLUMNS = ['ATCOCode',
-##           'CommonName',
-##           'Street',
-##           'Longitude',
-##           'Latitude',
-##           'StopType']
+# Data Structure
+# COLUMNS = ['ATCOCode',
+#           'CommonName',
+#           'Street',
+#           'Longitude',
+#           'Latitude',
+#           'StopType']
 
 
 def get_test_data():
