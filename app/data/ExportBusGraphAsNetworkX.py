@@ -15,7 +15,6 @@ from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 # Draw the network graph
 def draw_networkx_graph(G, edge_para="weight"):
-    ax = plt.subplot()
     pos = nx.spring_layout(G)  # easier to understand graph layout (nodes repel each other)
     nx.draw(G, pos, node_size=50)
     edge_labels = nx.get_edge_attributes(G, edge_para)
