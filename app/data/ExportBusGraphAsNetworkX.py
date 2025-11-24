@@ -23,6 +23,7 @@ def draw_networkx_graph(G, edge_para="weight"):
 
     plt.show()
 
+
 ## Returns the distance in kilometers using the haversine module
 def get_weight_haversine(initialNode, targetNode):
 
@@ -34,6 +35,7 @@ def get_weight_haversine(initialNode, targetNode):
         ),
         2,
     )
+
 
 ## Returns networkx bus access node graph with weights
 def get_bus_graph_networkx():
