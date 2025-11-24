@@ -45,7 +45,7 @@ and all within a minimum distance of `DEGREE_DISTANCE` in the same file.
 
 ## Python Files, Method and Class Graph
 
-![image](img/DataFolderDiagram.drawio)
+![image](./img/DataFolderDiagram.drawio.png)
 
 ## Current Limitations
 
