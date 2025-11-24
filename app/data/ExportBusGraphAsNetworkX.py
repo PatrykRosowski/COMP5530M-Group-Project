@@ -11,7 +11,7 @@ from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 #             Longitude  : int,
 #             Latitude   : int}
 #
-# Weight: Distance in long and lat between nodes (Pythagoras)
+# Weight: Distance in long and lat between nodes
 
 
 ## Draw the network graph
@@ -24,16 +24,9 @@ def draw_networkx_graph(G, edge_para="weight"):
 
     plt.show()
 
-
-## Return the weight of each edge between nodes, which uses distance and Pythagoras' Theorem
-def get_weight(initialNode, targetNode):
-    latitudeSquared = (initialNode.get_Latitude() - targetNode.get_Latitude()) ** 2
-    longitudeSquared = (initialNode.get_Longitude() - targetNode.get_Longitude()) ** 2
-
-    return math.sqrt(latitudeSquared + longitudeSquared)  # Pythagoras' Theorem
-
-
+## Returns the distance in kilometers using the haversine module
 def get_weight_haversine(initialNode, targetNode):
+
     return round(
         haversine(
             (initialNode.get_Longitude(), initialNode.get_Latitude()),
@@ -42,7 +35,6 @@ def get_weight_haversine(initialNode, targetNode):
         ),
         2,
     )
-
 
 ## Returns networkx bus access node graph with weights
 def get_bus_graph_networkx():
@@ -70,7 +62,7 @@ def get_bus_graph_networkx():
             )
 
     ## Save graph as graphml - ungku
-    # nx.write_graphml_lxml(G, "bus_graph.graphml")
+    nx.write_graphml_lxml(G, "bus_graph.graphml")
 
     ## Return graph as networkx format
     return G

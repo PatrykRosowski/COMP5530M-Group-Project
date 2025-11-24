@@ -1,7 +1,7 @@
 Flask
 python-dotenv
 networkx
-matplotlibx
+matplotlib
 naptan
 tabloo
 haversine
