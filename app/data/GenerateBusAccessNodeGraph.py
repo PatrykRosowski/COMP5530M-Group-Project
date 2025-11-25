@@ -1,11 +1,11 @@
-from app.data.GetAccessNodes import get_bus_stop_data
-from app.data.GetTestData import get_test_data
-from app.data.AccessNode import AccessNode
+from GetAccessNodes import get_bus_stop_data
+from GetTestData import get_test_data
+from AccessNode import AccessNode
 
 # The degree distance for nearby bus stops
-DEGREE_DISTANCE = 0.003  # ~333m increments
+DEGREE_DISTANCE = 0.0015  # ~155m increments
 # The number of the minimum bus stop edges for each bus stop
-MIN_NEARBY_STOPS = 4
+MIN_NEARBY_STOPS = 2
 
 
 # Returns true if the target node is nearby the target node, depending on the iteration
@@ -43,7 +43,7 @@ def get_bus_access_node_graph():
 
     # Generating arrays of all nearby stops for each stop
     for accessNode in AccessNodeGraph:
-        for increment in range(1, 60):
+        for increment in range(2, 60):
             # Adding all nearby nodes
             for node in AccessNodeGraph:
                 # Don't want each node adding itself

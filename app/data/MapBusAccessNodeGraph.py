@@ -1,4 +1,4 @@
-from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from GenerateBusAccessNodeGraph import get_bus_access_node_graph
 import matplotlib.pyplot as plt
 
 

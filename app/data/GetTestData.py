@@ -1,4 +1,4 @@
-from app.data.GetAccessNodes import get_street_data
+from GetAccessNodes import get_street_data
 
 # Data Structure
 # COLUMNS = ['ATCOCode',

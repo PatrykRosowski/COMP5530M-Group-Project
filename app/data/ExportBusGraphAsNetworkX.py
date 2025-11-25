@@ -1,9 +1,13 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import requests
+from bokeh.models import Circle
+from bokeh.plotting import figure, output_file
+from bokeh.plotting import from_networkx
+from bokeh.io import save
 from pathlib import Path
 from haversine import haversine, Unit
-from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 # Graph format
 # Node       {ATCOCode: int}
@@ -20,11 +24,13 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 # Draw the network graph
-def draw_networkx_graph(G, edge_para="weight"):
+def draw_networkx_graph(G, labels, edge_para="weight"):
     pos = nx.spring_layout(G)  # easier to understand graph layout (nodes repel each other)
-    nx.draw(G, pos, node_size=50)
+    nx.draw_networkx_nodes(G, pos, node_size=30, alpha=0.5)
+    nx.draw_networkx_labels(G, pos=pos, labels=labels, font_size=7)
+    nx.draw_networkx_edges(G, pos=pos, alpha=0.5, width=0.5)
     edge_labels = nx.get_edge_attributes(G, edge_para)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=7)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=5)
 
     plt.show()
 
@@ -56,6 +62,7 @@ def get_distance_haversine(initialNode, targetNode):
 def get_bus_graph_networkx():
     bus_graph = get_bus_access_node_graph()
     G = nx.DiGraph()
+    labels = {}  # For adding custom labels to graph
 
     # Adding access nodes to networkx graph along with attributes
     for accessNode in bus_graph:
@@ -66,6 +73,7 @@ def get_bus_graph_networkx():
             Longitude=accessNode.get_Longitude(),
             Latitude=accessNode.get_Latitude(),
         )
+        labels[accessNode.get_ATCOCode()] = accessNode.get_CommonName()
 
     # Adding edges into networkx graph between access nodes
     for accessNode in bus_graph:
@@ -74,8 +82,11 @@ def get_bus_graph_networkx():
             G.add_edge(
                 accessNode.get_ATCOCode(),
                 neighbour.get_ATCOCode(),
-                weight=get_distance_haversine(accessNode, neighbour),
+                weight=get_weight(accessNode, neighbour),
             )
+
+    # Drawing graph
+    draw_networkx_graph(G, labels)
 
     # Save graph as graphml - ungku
     nx.write_graphml_lxml(G, "bus_graph.graphml")
@@ -100,3 +111,6 @@ def convert_bus_graph_time():
             print(f"Edge ({u}, {v}) missing {DISTANCE_KEY} attribute.")
 
     return G
+
+
+get_bus_graph_networkx()
