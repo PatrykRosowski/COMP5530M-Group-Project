@@ -1,10 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import requests
-from bokeh.models import Circle
-from bokeh.plotting import figure, output_file
-from bokeh.plotting import from_networkx
-from bokeh.io import save
 from pathlib import Path
 from haversine import haversine, Unit
 from GenerateBusAccessNodeGraph import get_bus_access_node_graph

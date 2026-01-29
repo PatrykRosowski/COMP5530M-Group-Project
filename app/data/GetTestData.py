@@ -22,6 +22,6 @@ def get_test_data():
                     'Burley Road', # disconnected
                     'Kirkstall Road']
     """
-    test_streets = ["The Headrow", "Park Row", "Boar Lane", "Infirmary Street"]
+    test_streets = ["The Headrow"]
 
     return get_street_data(test_streets)
