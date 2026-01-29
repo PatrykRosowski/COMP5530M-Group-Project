@@ -38,6 +38,7 @@ def get_weight(initialNode, targetNode):
         f"{OSRM_URL}{initialNode.Longitude},{initialNode.Latitude};{targetNode.Longitude},{targetNode.Latitude}"
     )
     responseJson = response.json()
+    print(responseJson.get("routes")[0].get("duration"))
     return responseJson.get("routes")[0].get("duration")
 
 

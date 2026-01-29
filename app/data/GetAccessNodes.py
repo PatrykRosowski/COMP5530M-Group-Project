@@ -1,7 +1,6 @@
 import naptan
-import tabloo
 
-AREA_CODE = "450"
+AREA_CODE = "320"
 BUS_STOP_TYPE = "BCT"
 COLUMNS = ["ATCOCode", "CommonName", "Street", "Longitude", "Latitude", "StopType"]
 

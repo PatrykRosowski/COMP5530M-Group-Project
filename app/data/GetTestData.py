@@ -11,17 +11,14 @@ from GetAccessNodes import get_street_data
 
 def get_test_data():
     """
-    test_streets = ['The Headrow',
-                    'Woodhouse Lane', # disconnected
-                    'Headingley Lane',
-                    'Wellington Street', # disconnected
-                    'Vicar Lane', # disconnected
-                    'Boar Lane',
-                    'Park Row',
-                    'Infirmary Street',
-                    'Burley Road', # disconnected
-                    'Kirkstall Road']
+    test_streets = ['Parliament Street']
     """
-    test_streets = ["The Headrow"]
+    test_streets = [
+        "Parliament Street",
+        "Cheltenham Parade",
+        "Station Parade",
+        "W Park",
+        "Montpellier Hill",
+    ]
 
     return get_street_data(test_streets)
