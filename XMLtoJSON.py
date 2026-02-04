@@ -48,12 +48,19 @@ for file in rawData:
     tempRouteData = []
 
     for i in range(len(routeData)):
+
+        midrouteDirections = {}
+        for j in routeData[i].find_all("Location"):
+            #Fetch all coordinates from RouteSection, and link them with their respective 'id'
+            midrouteDirections[j.get("id")] = (j.find("Latitude").get_text(), j.find("Longitude").get_text())
+
         tempRouteData.append( {
             "Start" : routeData[i].find("From").get_text()[1:-1], #removes '\n' from start and end
             "End" : routeData[i].find("To").get_text()[1:-1],
-            "Distance" : routeData[i].find("Distance").get_text()
-            } )
+            "Distance" : routeData[i].find("Distance").get_text(),
+            "Route Track" : midrouteDirections } )
     jsonRouteData.append(tempRouteData)
+
 
 
 ## Exporting Formatted Data ##
