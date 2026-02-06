@@ -1,27 +1,24 @@
-from app.data.GetAccessNodes import get_street_data
+from GetAccessNodes import get_street_data
 
-## Data Structure
-##COLUMNS = ['ATCOCode',
-##           'CommonName',
-##           'Street',
-##           'Longitude',
-##           'Latitude',
-##           'StopType']
+# Data Structure
+# COLUMNS = ['ATCOCode',
+#           'CommonName',
+#           'Street',
+#           'Longitude',
+#           'Latitude',
+#           'StopType']
 
 
 def get_test_data():
     """
-    test_streets = ['The Headrow',
-                    'Woodhouse Lane', # disconnected
-                    'Headingley Lane',
-                    'Wellington Street', # disconnected
-                    'Vicar Lane', # disconnected
-                    'Boar Lane',
-                    'Park Row',
-                    'Infirmary Street',
-                    'Burley Road', # disconnected
-                    'Kirkstall Road']
+    test_streets = ['Parliament Street']
     """
-    test_streets = ["The Headrow", "Park Row", "Boar Lane", "Infirmary Street"]
+    test_streets = [
+        "Parliament Street",
+        "Cheltenham Parade",
+        "Station Parade",
+        "W Park",
+        "Montpellier Hill",
+    ]
 
     return get_street_data(test_streets)

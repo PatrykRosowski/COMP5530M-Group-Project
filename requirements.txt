@@ -1,7 +1,7 @@
 Flask
 python-dotenv
 networkx
-matplotlibx
+matplotlib
 naptan
 tabloo
 haversine
@@ -9,3 +9,5 @@ flask-cors
 flake8
 flake8-black
 black
+pathlib
+requests
