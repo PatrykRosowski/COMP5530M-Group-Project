@@ -4,6 +4,8 @@ import requests
 from pathlib import Path
 from haversine import haversine, Unit
 from GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from scipy.spatial import Delaunay
+import gmplot
 
 # Graph format
 # Node       {ATCOCode: int}
@@ -29,6 +31,36 @@ def draw_networkx_graph(G, labels, edge_para="weight"):
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=5)
 
     plt.show()
+
+
+# Map the network graph onto a real map
+def map_networkx_graph_(G, labels, edge_para="weight"):
+    gmap = gmplot.GoogleMapPlotter(53.9921, 1.5418, 13)
+
+    # Lists for passing onto Google Maps
+    latitude_list = []
+    longitude_list = []
+
+    # Retrieving Latitude and Longitude data from graph
+    for accessNode, data in G.nodes(data=True):
+        latitude_list.append(data.get("Latitude"))
+        longitude_list.append(data.get("Longitude"))
+
+        # Plot any edges of this accessNode
+        for edge in G.out_edges(accessNode):
+            sourceLatitude = G.nodes[edge[0]]["Latitude"]
+            sourceLongitude = G.nodes[edge[0]]["Longitude"]
+
+            targetLatitude = G.nodes[edge[1]]["Latitude"]
+            targetLongitude = G.nodes[edge[1]]["Longitude"]
+
+            gmap.plot([sourceLatitude, targetLatitude], [sourceLongitude, targetLongitude])
+
+    # Scatter points onto Google Maps
+    gmap.scatter(latitude_list, longitude_list)
+
+    # Creating the Google Maps HTML
+    gmap.draw("map.html")
 
 
 # Returns the time taken to travel from the initial node to the target node
@@ -60,6 +92,7 @@ def get_bus_graph_networkx():
     bus_graph = get_bus_access_node_graph()
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
+    coords = []
 
     # Adding access nodes to networkx graph along with attributes
     for accessNode in bus_graph:
@@ -71,19 +104,57 @@ def get_bus_graph_networkx():
             Latitude=accessNode.get_Latitude(),
         )
         labels[accessNode.get_ATCOCode()] = accessNode.get_CommonName()
+        coords.append([accessNode.get_Longitude(), accessNode.get_Latitude()])
+
+    # Finding edges through Delaunay Triangulation
+    delaunay = Delaunay(coords)
+    for tri in delaunay.simplices:
+        accessNode0Coords = delaunay.points[tri[0]]
+        accessNode1Coords = delaunay.points[tri[1]]
+        accessNode2Coords = delaunay.points[tri[2]]
+
+        accessNode0 = None
+        accessNode1 = None
+        accessNode2 = None
+
+        for accessNode in bus_graph:
+            # Check if access node is inside the triangulation
+            if (
+                accessNode.get_Longitude() == accessNode0Coords[0]
+                and accessNode.get_Latitude() == accessNode0Coords[1]
+            ):
+                accessNode0 = accessNode
+            elif (
+                accessNode.get_Longitude() == accessNode1Coords[0]
+                and accessNode.get_Latitude() == accessNode1Coords[1]
+            ):
+                accessNode1 = accessNode
+            elif (
+                accessNode.get_Longitude() == accessNode2Coords[0]
+                and accessNode.get_Latitude() == accessNode2Coords[1]
+            ):
+                accessNode2 = accessNode
+
+        if accessNode0 is not None and accessNode1 is not None and accessNode2 is not None:
+            G.add_edge(accessNode0.get_ATCOCode(), accessNode1.get_ATCOCode())
+            G.add_edge(accessNode1.get_ATCOCode(), accessNode2.get_ATCOCode())
+            G.add_edge(accessNode0.get_ATCOCode(), accessNode2.get_ATCOCode())
 
     # Adding edges into networkx graph between access nodes
-    for accessNode in bus_graph:
-        # Add edge for all nearby neighbours
-        for neighbour in accessNode.get_Nearby():
-            G.add_edge(
-                accessNode.get_ATCOCode(),
-                neighbour.get_ATCOCode(),
-                weight=get_weight(accessNode, neighbour),
-            )
+    # for accessNode in bus_graph:
+    #     # Add edge for all nearby neighbours
+    #     for neighbour in accessNode.get_Nearby():
+    #         G.add_edge(
+    #             accessNode.get_ATCOCode(),
+    #             neighbour.get_ATCOCode(),
+    #             weight=get_weight(accessNode, neighbour),
+    #         )
 
     # Drawing graph
-    draw_networkx_graph(G, labels)
+    # draw_networkx_graph(G, labels)
+
+    # Mapping graph
+    map_networkx_graph_(G, labels)
 
     # Save graph as graphml - ungku
     nx.write_graphml_lxml(G, "bus_graph.graphml")
