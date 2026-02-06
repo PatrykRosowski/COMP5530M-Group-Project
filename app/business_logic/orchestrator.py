@@ -47,7 +47,7 @@ def route_calculation() -> tuple[tuple, int]:
         line_candidates = []
 
         for i in range(N):
-            (A, B) = select_random_nodes(G, X)
+            A, B = select_random_nodes(G, X)
             print(f"Node selected {A}, {B}")
 
             print(f"Computing MESP - round {i}")
