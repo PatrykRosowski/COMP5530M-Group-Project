@@ -106,7 +106,7 @@ def get_bus_graph_networkx():
         labels[accessNode.get_ATCOCode()] = accessNode.get_CommonName()
         coords.append([accessNode.get_Longitude(), accessNode.get_Latitude()])
 
-    ## Finding edges through Delaunay Triangulation
+    # Finding edges through Delaunay Triangulation
     delaunay = Delaunay(coords)
     for tri in delaunay.simplices:
         accessNode0Coords = delaunay.points[tri[0]]
@@ -135,7 +135,7 @@ def get_bus_graph_networkx():
             ):
                 accessNode2 = accessNode
 
-        if accessNode0 != None and accessNode1 != None and accessNode2 != None:
+        if accessNode0 is not None and accessNode1 is not None and accessNode2 is not None:
             G.add_edge(accessNode0.get_ATCOCode(), accessNode1.get_ATCOCode())
             G.add_edge(accessNode1.get_ATCOCode(), accessNode2.get_ATCOCode())
             G.add_edge(accessNode0.get_ATCOCode(), accessNode2.get_ATCOCode())
