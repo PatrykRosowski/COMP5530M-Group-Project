@@ -25,7 +25,7 @@ jobs:
           pip install black flake8
 
       - name: 🎨 Black Code Style Check
-        run: black --check .
+        run: black --check --diff .
 
       - name: 🔍 Flake8 Lint Check
         run: flake8 .
