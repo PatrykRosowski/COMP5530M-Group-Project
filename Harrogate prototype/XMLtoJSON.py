@@ -80,7 +80,8 @@ with open("AllRoutesData.json", "w") as g:
 
 # Convenience functions:
 
-def printStops(StopsJSON, n = None, s = 0):
+
+def printStops(StopsJSON, n=None, s=0):
     try:
         if n == None:
             n = len(StopsJSON)
@@ -89,7 +90,7 @@ def printStops(StopsJSON, n = None, s = 0):
     except:
         print("Error in JSON or filter_number(s)")
 
-def printOnlyRoutes(RoutesJSON, n = None, s = 0):
+def printOnlyRoutes(RoutesJSON, n=None, s=0):
     try:
         if n == None:
             n = len(RoutesJSON)
@@ -98,7 +99,7 @@ def printOnlyRoutes(RoutesJSON, n = None, s = 0):
     except:
         print("Error in JSON or filter_number(s)")
 
-def printExtraRoutes(RoutesJSON, n = None, s = 0):
+def printExtraRoutes(RoutesJSON, n=None, s=0):
     try:
         if n == None:
             n = len(StopsJSON)
@@ -107,7 +108,7 @@ def printExtraRoutes(RoutesJSON, n = None, s = 0):
     except:
         print("Error in JSON or filter_number(s)")
 
-def printExcessRoutes(RoutesJSON, n = None, s = 0):
+def printExcessRoutes(RoutesJSON, n=None, s=0):
     try:
         if n == None:
             n = len(StopsJSON)
@@ -117,7 +118,8 @@ def printExcessRoutes(RoutesJSON, n = None, s = 0):
             print()
     except:
         print("Error in JSON or filter_number(s)")
-        
+
+
 tutorial = 0
 if tutorial == 1:
     print(
@@ -127,3 +129,4 @@ if tutorial == 1:
     > Data contains 1. Stop Point Reference (ATCO Code), 2. Common Name of bus stop, 3. Locality Name"
     )
     print("Run commands on terminal to access data")
+
