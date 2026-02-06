@@ -96,7 +96,7 @@ def printOnlyRoutes(RoutesJSON, n=None, s=0):
         if n == None:
             n = len(RoutesJSON)
         for j in RoutesJSON[s:n]:
-            print({k: v for k, v in j.items() if k not in  "Route Track"})
+            print({k: v for k, v in j.items() if k not in "Route Track"})
     except:
         print("Error in JSON or filter_number(s)")
 
@@ -132,3 +132,4 @@ if tutorial == 1:
     > Data contains 1. Stop Point Reference (ATCO Code), 2. Common Name of bus stop, 3. Locality Name"
     )
     print("Run commands on terminal to access data")
+
