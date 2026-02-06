@@ -74,7 +74,50 @@ with open("AllRoutesData.json", "w") as g:
 
 ## Main ##
 
-tutorial = 1
+# Convenience functions:
+
+def printStops(StopsJSON, n = None, s = 0):
+    try:
+        if n == None:
+            n = len(StopsJSON)
+        for i in StopsJSON[s:n]:
+            print(i)
+    except:
+        print("Error in JSON or filter_number(s)")
+
+def printOnlyRoutes(RoutesJSON, n = None, s = 0):
+    try:
+        if n == None:
+            n = len(RoutesJSON)
+        for j in RoutesJSON[s:n]:
+            print( {k:v for k,v in j.items() if k not in  "Route Track"} )
+    except:
+        print("Error in JSON or filter_number(s)")
+
+def printExtraRoutes(RoutesJSON, n = None, s = 0):
+    try:
+        if n == None:
+            n = len(StopsJSON)
+        for k in RoutesJSON[s:n]:
+            print(k, end='\n\n')
+    except:
+        print("Error in JSON or filter_number(s)")
+
+def printExcessRoutes(RoutesJSON, n = None, s = 0):
+    try:
+        if n == None:
+            n = len(StopsJSON)
+        for l in RoutesJSON[s:n]:
+            for r in l["Route Track"]:
+                print(f"'{r}' : {l['Route Track'][r]}")
+            print()
+    except:
+        print("Error in JSON or filter_number(s)")
+
+# Main execution:
+
+tutorial = 0
+
 if tutorial == 1:
     print("Data is stored in array 'jsonStopData' for bus stops and 'jsonRouteData' for bus routes.\n\
     > jsonData[i] gives the data for the 'i'th file, and is an array.\n\
