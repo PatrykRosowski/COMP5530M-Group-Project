@@ -90,23 +90,26 @@ def printStops(StopsJSON, n=None, s=0):
     except:
         print("Error in JSON or filter_number(s)")
 
+
 def printOnlyRoutes(RoutesJSON, n=None, s=0):
     try:
         if n == None:
             n = len(RoutesJSON)
         for j in RoutesJSON[s:n]:
-            print( {k:v for k,v in j.items() if k not in  "Route Track"} )
+            print({k:v for k,v in j.items() if k not in  "Route Track"})
     except:
         print("Error in JSON or filter_number(s)")
+
 
 def printExtraRoutes(RoutesJSON, n=None, s=0):
     try:
         if n == None:
             n = len(StopsJSON)
         for k in RoutesJSON[s:n]:
-            print(k, end='\n\n')
+            print(k, end="\n\n")
     except:
         print("Error in JSON or filter_number(s)")
+
 
 def printExcessRoutes(RoutesJSON, n=None, s=0):
     try:
@@ -129,4 +132,3 @@ if tutorial == 1:
     > Data contains 1. Stop Point Reference (ATCO Code), 2. Common Name of bus stop, 3. Locality Name"
     )
     print("Run commands on terminal to access data")
-
