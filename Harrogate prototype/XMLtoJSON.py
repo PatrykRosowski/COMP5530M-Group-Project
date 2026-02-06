@@ -2,13 +2,13 @@
 # File to convert XML into JSON #
 # ----------------------------- #
 
-## Imports ##
+# --Imports-- #
 
 from bs4 import BeautifulSoup
 import json
 import os
 
-## File Handling ##
+# --File Handling-- #
 
 # Array of extracted XML data
 rawData = []
@@ -21,7 +21,7 @@ for file in os.listdir(r"./"):
         with open(file, "r") as f:
             rawData.append(f.read())
 
-## Formatting Data ##
+# --Formatting Data-- #
 
 jsonStopData = []
 jsonRouteData = []
@@ -68,7 +68,7 @@ for file in rawData:
         )
     jsonRouteData.append(tempRouteData)
 
-## Exporting Formatted Data ##
+# --Exporting Formatted Data-- #
 
 with open("AllBusStopData.json", "w") as f:
     json.dump(jsonStopData, f)
@@ -76,50 +76,50 @@ with open("AllBusStopData.json", "w") as f:
 with open("AllRoutesData.json", "w") as g:
     json.dump(jsonRouteData, g)
 
-## Main ##
+# ---Main--- #
 
-# Convenience functions:
+# Convenient functions:
 
 
 def printStops(StopsJSON, n=None, s=0):
     try:
-        if n == None:
+        if n is None:
             n = len(StopsJSON)
         for i in StopsJSON[s:n]:
             print(i)
-    except:
+    except IndexError or KeyError:
         print("Error in JSON or filter_number(s)")
 
 
 def printOnlyRoutes(RoutesJSON, n=None, s=0):
     try:
-        if n == None:
+        if n is None:
             n = len(RoutesJSON)
         for j in RoutesJSON[s:n]:
             print({k: v for k, v in j.items() if k not in "Route Track"})
-    except:
+    except IndexError or KeyError:
         print("Error in JSON or filter_number(s)")
 
 
 def printExtraRoutes(RoutesJSON, n=None, s=0):
     try:
-        if n == None:
-            n = len(StopsJSON)
+        if n is None:
+            n = len(RoutesJSON)
         for k in RoutesJSON[s:n]:
             print(k, end="\n\n")
-    except:
+    except IndexError or KeyError:
         print("Error in JSON or filter_number(s)")
 
 
 def printExcessRoutes(RoutesJSON, n=None, s=0):
     try:
-        if n == None:
-            n = len(StopsJSON)
-        for l in RoutesJSON[s:n]:
-            for r in l["Route Track"]:
-                print(f"'{r}' : {l['Route Track'][r]}")
+        if n is None:
+            n = len(RoutesJSON)
+        for m in RoutesJSON[s:n]:
+            for r in m["Route Track"]:
+                print(f"'{r}' : {m['Route Track'][r]}")
             print()
-    except:
+    except IndexError or KeyError:
         print("Error in JSON or filter_number(s)")
 
 
@@ -132,3 +132,4 @@ if tutorial == 1:
     > Data contains 1. Stop Point Reference (ATCO Code), 2. Common Name of bus stop, 3. Locality Name"
     )
     print("Run commands on terminal to access data")
+
