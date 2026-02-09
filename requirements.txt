@@ -11,3 +11,5 @@ flake8-black
 black
 pathlib
 requests
+valhalla
+polyline
