@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import requests
 from pathlib import Path
 from haversine import haversine, Unit
-from GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 # Graph format
 # Node       {ATCOCode: int}
@@ -17,6 +17,7 @@ from GenerateBusAccessNodeGraph import get_bus_access_node_graph
 # URL for getting routing time requests
 OSRM_URL = "http://router.project-osrm.org/route/v1/driving/"
 ROOT_DIR = Path(__file__).resolve().parent.parent
+GRAPH_PATH = Path("bus_graph.graphml")
 
 
 # Draw the network graph
@@ -57,6 +58,13 @@ def get_distance_haversine(initialNode, targetNode):
 
 # Returns networkx bus access node graph with weights
 def get_bus_graph_networkx():
+
+    if GRAPH_PATH.exists():
+        print("Using existing bus graph file.....")
+        G = nx.read_graphml(GRAPH_PATH)
+        return G
+
+    print("Generating bus graph.....\n")
     bus_graph = get_bus_access_node_graph()
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
@@ -108,6 +116,3 @@ def convert_bus_graph_time():
             print(f"Edge ({u}, {v}) missing {DISTANCE_KEY} attribute.")
 
     return G
-
-
-get_bus_graph_networkx()
