@@ -20,6 +20,9 @@ import gmplot
 OSRM_URL = "http://router.project-osrm.org/route/v1/driving/"
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
+# Constant parameters
+MINIMUM_DISTANCE = 100
+
 
 # Draw the network graph
 def draw_networkx_graph(G, labels, edge_para="weight"):
@@ -54,7 +57,14 @@ def map_networkx_graph_(G, labels, edge_para="weight"):
             targetLatitude = G.nodes[edge[1]]["Latitude"]
             targetLongitude = G.nodes[edge[1]]["Longitude"]
 
-            gmap.plot([sourceLatitude, targetLatitude], [sourceLongitude, targetLongitude])
+            # Check the distance of the two nodes, if the distance is too short, dont add the edge
+            distance = get_distance_haversize_long_lat(
+                [sourceLongitude, sourceLatitude], [targetLongitude, targetLatitude]
+            )
+
+            # Add the edge if larger than the minimum distance
+            if distance > MINIMUM_DISTANCE:
+                gmap.plot([sourceLatitude, targetLatitude], [sourceLongitude, targetLongitude])
 
     # Scatter points onto Google Maps
     gmap.scatter(latitude_list, longitude_list)
@@ -82,6 +92,20 @@ def get_distance_haversine(initialNode, targetNode):
             (initialNode.get_Longitude(), initialNode.get_Latitude()),
             (targetNode.get_Longitude(), targetNode.get_Latitude()),
             unit=Unit.KILOMETERS,
+        ),
+        2,
+    )
+
+
+# Returns the distance in meters using the haversine module
+def get_distance_haversize_long_lat(initialNode, targetNode):
+    # Nodes are 1-dimensional array [Longitude, Latitude]
+
+    return round(
+        haversine(
+            (initialNode[0], initialNode[1]),
+            [targetNode[0], targetNode[1]],
+            unit=Unit.METERS,  # Return in meters
         ),
         2,
     )
