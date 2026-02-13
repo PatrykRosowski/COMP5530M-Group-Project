@@ -51,3 +51,9 @@ and all within a minimum distance of `DEGREE_DISTANCE` in the same file.
 
 * Graph is not always connected
 * Weight is distance, not time
+
+## Using PBF local file
+
+To use a PBF, you must first remove the geometry from the file. You can do this by running the command using `osium`:
+
+`osmium tags-filter area-latest.osm.pbf w/highway -o roads_only.osm.pbf`

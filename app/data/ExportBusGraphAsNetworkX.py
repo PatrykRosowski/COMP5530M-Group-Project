@@ -6,6 +6,9 @@ from haversine import haversine, Unit
 from GenerateBusAccessNodeGraph import get_bus_access_node_graph
 from scipy.spatial import Delaunay
 import gmplot
+import osmnx as ox
+from pyrosm import OSM
+import gc
 
 # Graph format
 # Node       {ATCOCode: int}
@@ -21,6 +24,7 @@ OSRM_URL = "http://router.project-osrm.org/route/v1/driving/"
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
 # Constant parameters
+REGION_MAP = "Data/graph/roads_only.osm.pbf"
 MINIMUM_DISTANCE = 100
 
 
@@ -73,7 +77,11 @@ def map_networkx_graph_(G, labels, edge_para="weight"):
                 qrt_latitude = (sourceLatitude + mid_latitude) / 2
                 qrt_longitude = (sourceLongitude + mid_longitude) / 2
 
-                gmap.marker(qrt_latitude, qrt_longitude, title=f"{weight}km")
+                gmap.marker(
+                    qrt_latitude,
+                    qrt_longitude,
+                    title=f"{weight}km",
+                )
 
     # Scatter points onto Google Maps
     gmap.scatter(latitude_list, longitude_list)
@@ -83,14 +91,62 @@ def map_networkx_graph_(G, labels, edge_para="weight"):
 
 
 # Returns the time taken to travel from the initial node to the target node
-def get_weight(initialNode, targetNode):
+def get_weight(initialNode, targetNode, G):
 
-    response = requests.post(
-        f"{OSRM_URL}{initialNode.Longitude},{initialNode.Latitude};{targetNode.Longitude},{targetNode.Latitude}"
+    initialCoords = (initialNode.Longitude, initialNode.Latitude)
+    targetCoords = (targetNode.Longitude, targetNode.Latitude)
+
+    # Find nearest nodes to our G node coordinates
+    initialOSMNode = ox.distance.nearest_nodes(G, initialCoords[0], initialCoords[1])
+    targetOSMNode = ox.distance.nearest_nodes(G, targetCoords[0], targetCoords[1])
+
+    # Get the travel time in seconds using networkx
+    travelTime = nx.shortest_path_length(G, initialOSMNode, targetOSMNode, weight="travel_time")
+
+    print(travelTime)
+    return travelTime
+
+
+# Returns a custom map from OpenStreetMap of England, consisting of all roads
+def get_graph_from_pbf():
+
+    # Get regional PBF graph data
+    pbf = OSM(REGION_MAP)
+
+    # Extract network with bus gates included
+    nodes, edges = pbf.get_network(
+        network_type="driving",
+        nodes=True,
+        extra_attributes=["psv", "bus", "access", "maxspeed"],
     )
-    responseJson = response.json()
-    print(responseJson.get("routes")[0].get("duration"))
-    return responseJson.get("routes")[0].get("duration")
+
+    # Filter roads and bus-specific areas
+    bus_edges = edges[
+        (edges["access"] != "no")
+        | (edges["bus"].isin(["yes", "designated"]))
+        | (edges["psv"].isin(["yes", "designated"]))
+    ].copy()
+
+    # Remove unnecessary attributes
+    edges["geometry"] = None
+    keep_cols = ["u", "v", "key", "length", "highway", "geometry", "oneway"]
+    bus_edges = bus_edges[[c for c in bus_edges.columns if c in keep_cols]]
+
+    # Delete old edges
+    del edges
+    gc.collect()
+
+    print("Got to here")
+    # Convert to networkx graph with bus edges
+    networkxGraph = pbf.to_graph(nodes, bus_edges, graph_type="networkx")
+
+    print("Adding edge speeds")
+    # Use OSMnx to add speeds and travel times
+    networkxGraph = ox.add_edge_speeds(networkxGraph)
+    networkxGraph = ox.add_edge_travel_times(networkxGraph)
+
+    # Return graph
+    return networkxGraph
 
 
 # Returns the distance in kilometers using the haversine module
@@ -126,6 +182,11 @@ def get_bus_graph_networkx():
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
     coords = []
+
+    # Getting graph for calculating driving speeds
+    print("Getting speed graph")
+    speedGraph = get_graph_from_pbf()
+    print("Speed graph got")
 
     # Adding access nodes to networkx graph along with attributes
     for accessNode in bus_graph:
@@ -173,33 +234,33 @@ def get_bus_graph_networkx():
             G.add_edge(
                 accessNode0.get_ATCOCode(),
                 accessNode1.get_ATCOCode(),
-                weight=get_distance_haversine(accessNode0, accessNode1),
+                weight=get_weight(accessNode0, accessNode1, speedGraph),
             )
             G.add_edge(
                 accessNode1.get_ATCOCode(),
                 accessNode2.get_ATCOCode(),
-                weight=get_distance_haversine(accessNode1, accessNode2),
+                weight=get_weight(accessNode1, accessNode2, speedGraph),
             )
             G.add_edge(
                 accessNode0.get_ATCOCode(),
                 accessNode2.get_ATCOCode(),
-                weight=get_distance_haversine(accessNode0, accessNode2),
+                weight=get_weight(accessNode0, accessNode2, speedGraph),
             )
             # Add the reverse edges too
             G.add_edge(
                 accessNode1.get_ATCOCode(),
                 accessNode0.get_ATCOCode(),
-                weight=get_distance_haversine(accessNode1, accessNode0),
+                weight=get_weight(accessNode1, accessNode0, speedGraph),
             )
             G.add_edge(
                 accessNode2.get_ATCOCode(),
                 accessNode1.get_ATCOCode(),
-                weight=get_distance_haversine(accessNode2, accessNode1),
+                weight=get_weight(accessNode2, accessNode1, speedGraph),
             )
             G.add_edge(
                 accessNode2.get_ATCOCode(),
                 accessNode0.get_ATCOCode(),
-                weight=get_distance_haversine(accessNode2, accessNode0),
+                weight=get_weight(accessNode2, accessNode0, speedGraph),
             )
 
     # Adding edges into networkx graph between access nodes
