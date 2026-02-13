@@ -50,12 +50,12 @@ def map_networkx_graph_(G, labels, edge_para="weight"):
         longitude_list.append(data.get("Longitude"))
 
         # Plot any edges of this accessNode
-        for edge in G.out_edges(accessNode):
-            sourceLatitude = G.nodes[edge[0]]["Latitude"]
-            sourceLongitude = G.nodes[edge[0]]["Longitude"]
+        for source, target, weight in G.out_edges(accessNode, data="weight"):
+            sourceLatitude = G.nodes[source]["Latitude"]
+            sourceLongitude = G.nodes[source]["Longitude"]
 
-            targetLatitude = G.nodes[edge[1]]["Latitude"]
-            targetLongitude = G.nodes[edge[1]]["Longitude"]
+            targetLatitude = G.nodes[target]["Latitude"]
+            targetLongitude = G.nodes[target]["Longitude"]
 
             # Check the distance of the two nodes, if the distance is too short, dont add the edge
             distance = get_distance_haversize_long_lat(
@@ -65,6 +65,15 @@ def map_networkx_graph_(G, labels, edge_para="weight"):
             # Add the edge if larger than the minimum distance
             if distance > MINIMUM_DISTANCE:
                 gmap.plot([sourceLatitude, targetLatitude], [sourceLongitude, targetLongitude])
+
+                # Plotting the edge weight label
+                mid_latitude = (sourceLatitude + targetLatitude) / 2
+                mid_longitude = (sourceLongitude + targetLongitude) / 2
+                # Make the marker closer to the source point
+                qrt_latitude = (sourceLatitude + mid_latitude) / 2
+                qrt_longitude = (sourceLongitude + mid_longitude) / 2
+
+                gmap.marker(qrt_latitude, qrt_longitude, title=f"{weight}km")
 
     # Scatter points onto Google Maps
     gmap.scatter(latitude_list, longitude_list)
@@ -159,10 +168,39 @@ def get_bus_graph_networkx():
             ):
                 accessNode2 = accessNode
 
+        # If there is a triangulation, add the edges
         if accessNode0 is not None and accessNode1 is not None and accessNode2 is not None:
-            G.add_edge(accessNode0.get_ATCOCode(), accessNode1.get_ATCOCode())
-            G.add_edge(accessNode1.get_ATCOCode(), accessNode2.get_ATCOCode())
-            G.add_edge(accessNode0.get_ATCOCode(), accessNode2.get_ATCOCode())
+            G.add_edge(
+                accessNode0.get_ATCOCode(),
+                accessNode1.get_ATCOCode(),
+                weight=get_distance_haversine(accessNode0, accessNode1),
+            )
+            G.add_edge(
+                accessNode1.get_ATCOCode(),
+                accessNode2.get_ATCOCode(),
+                weight=get_distance_haversine(accessNode1, accessNode2),
+            )
+            G.add_edge(
+                accessNode0.get_ATCOCode(),
+                accessNode2.get_ATCOCode(),
+                weight=get_distance_haversine(accessNode0, accessNode2),
+            )
+            # Add the reverse edges too
+            G.add_edge(
+                accessNode1.get_ATCOCode(),
+                accessNode0.get_ATCOCode(),
+                weight=get_distance_haversine(accessNode1, accessNode0),
+            )
+            G.add_edge(
+                accessNode2.get_ATCOCode(),
+                accessNode1.get_ATCOCode(),
+                weight=get_distance_haversine(accessNode2, accessNode1),
+            )
+            G.add_edge(
+                accessNode2.get_ATCOCode(),
+                accessNode0.get_ATCOCode(),
+                weight=get_distance_haversine(accessNode2, accessNode0),
+            )
 
     # Adding edges into networkx graph between access nodes
     # for accessNode in bus_graph:
