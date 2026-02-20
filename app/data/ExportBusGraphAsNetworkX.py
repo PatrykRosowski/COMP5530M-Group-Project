@@ -9,6 +9,10 @@ import gmplot
 import osmnx as ox
 from pyrosm import OSM
 import gc
+from concurrent.futures import ProcessPoolExecutor
+from itertools import repeat
+from tqdm.contrib.concurrent import thread_map
+import os
 
 # Graph format
 # Node       {ATCOCode: int}
@@ -80,7 +84,7 @@ def map_networkx_graph_(G, labels, edge_para="weight"):
                 gmap.marker(
                     qrt_latitude,
                     qrt_longitude,
-                    title=f"{weight}km",
+                    title=f"{weight:2f} seconds",
                 )
 
     # Scatter points onto Google Maps
@@ -91,20 +95,19 @@ def map_networkx_graph_(G, labels, edge_para="weight"):
 
 
 # Returns the time taken to travel from the initial node to the target node
-def get_weight(initialNode, targetNode, G):
-
-    initialCoords = (initialNode.Longitude, initialNode.Latitude)
-    targetCoords = (targetNode.Longitude, targetNode.Latitude)
-
-    # Find nearest nodes to our G node coordinates
-    initialOSMNode = ox.distance.nearest_nodes(G, initialCoords[0], initialCoords[1])
-    targetOSMNode = ox.distance.nearest_nodes(G, targetCoords[0], targetCoords[1])
+def add_weighted_edge(initialNode, targetNode, speedGraph, G, initialOSMNode, targetOSMNode):
 
     # Get the travel time in seconds using networkx
-    travelTime = nx.shortest_path_length(G, initialOSMNode, targetOSMNode, weight="travel_time")
+    travelTime = nx.shortest_path_length(
+        speedGraph, initialOSMNode, targetOSMNode, weight="travel_time"
+    )
 
-    print(travelTime)
-    return travelTime
+    # Add the edge to the graph
+    G.add_edge(
+        initialNode.get_ATCOCode(),
+        targetNode.get_ATCOCode(),
+        weight=travelTime,
+    )
 
 
 # Returns a custom map from OpenStreetMap of England, consisting of all roads
@@ -129,7 +132,7 @@ def get_graph_from_pbf():
 
     # Remove unnecessary attributes
     edges["geometry"] = None
-    keep_cols = ["u", "v", "key", "length", "highway", "geometry", "oneway"]
+    keep_cols = ["u", "v", "key", "length", "highway", "geometry", "oneway", "maxspeed"]
     bus_edges = bus_edges[[c for c in bus_edges.columns if c in keep_cols]]
 
     # Delete old edges
@@ -138,7 +141,7 @@ def get_graph_from_pbf():
 
     print("Got to here")
     # Convert to networkx graph with bus edges
-    networkxGraph = pbf.to_graph(nodes, bus_edges, graph_type="networkx")
+    networkxGraph = pbf.to_graph(nodes, bus_edges, graph_type="networkx", osmnx_compatible=True)
 
     print("Adding edge speeds")
     # Use OSMnx to add speeds and travel times
@@ -201,8 +204,20 @@ def get_bus_graph_networkx():
         coords.append([accessNode.get_Longitude(), accessNode.get_Latitude()])
 
     # Finding edges through Delaunay Triangulation
+    startNodes = []
+    endNodes = []
+    accessNodeInitialNearest = []
+    accessNodeTargetNearest = []
     delaunay = Delaunay(coords)
+    print(len(delaunay.simplices))
+    total = len(delaunay.simplices)
+    currentSimplice = 0
     for tri in delaunay.simplices:
+        # Printing off current progress
+        percentage = round((currentSimplice / total) * 100)
+        currentSimplice += 1
+        print(f"{currentSimplice}/{total}   {percentage}")
+
         accessNode0Coords = delaunay.points[tri[0]]
         accessNode1Coords = delaunay.points[tri[1]]
         accessNode2Coords = delaunay.points[tri[2]]
@@ -231,37 +246,46 @@ def get_bus_graph_networkx():
 
         # If there is a triangulation, add the edges
         if accessNode0 is not None and accessNode1 is not None and accessNode2 is not None:
-            G.add_edge(
-                accessNode0.get_ATCOCode(),
-                accessNode1.get_ATCOCode(),
-                weight=get_weight(accessNode0, accessNode1, speedGraph),
+            # Using paralellism and mutliprocessing to speed up the getting weight process
+            startNodes.extend(
+                [accessNode0, accessNode1, accessNode0, accessNode1, accessNode2, accessNode2]
             )
-            G.add_edge(
-                accessNode1.get_ATCOCode(),
-                accessNode2.get_ATCOCode(),
-                weight=get_weight(accessNode1, accessNode2, speedGraph),
+            endNodes.extend(
+                [accessNode1, accessNode2, accessNode2, accessNode0, accessNode1, accessNode0]
             )
-            G.add_edge(
-                accessNode0.get_ATCOCode(),
-                accessNode2.get_ATCOCode(),
-                weight=get_weight(accessNode0, accessNode2, speedGraph),
-            )
-            # Add the reverse edges too
-            G.add_edge(
-                accessNode1.get_ATCOCode(),
-                accessNode0.get_ATCOCode(),
-                weight=get_weight(accessNode1, accessNode0, speedGraph),
-            )
-            G.add_edge(
-                accessNode2.get_ATCOCode(),
-                accessNode1.get_ATCOCode(),
-                weight=get_weight(accessNode2, accessNode1, speedGraph),
-            )
-            G.add_edge(
-                accessNode2.get_ATCOCode(),
-                accessNode0.get_ATCOCode(),
-                weight=get_weight(accessNode2, accessNode0, speedGraph),
-            )
+
+            # Find nearest nodes to our G node coordinates
+            # accessOSMNode0 = ox.distance.nearest_nodes(speedGraph, X=accessNode0.get_Longitude(), Y=accessNode0.get_Latitude())
+            # accessOSMNode1 = ox.distance.nearest_nodes(speedGraph, X=accessNode1.get_Longitude(), Y=accessNode1.get_Latitude())
+            # accessOSMNode2 = ox.distance.nearest_nodes(speedGraph, X=accessNode2.get_Longitude(), Y=accessNode2.get_Latitude())
+
+            # accessNodeInitialNearest.extend([accessOSMNode0, accessOSMNode1, accessOSMNode0, accessOSMNode1, accessOSMNode2, accessOSMNode2])
+            # accessNodeTargetNearest.extend([accessOSMNode1, accessOSMNode2, accessOSMNode2, accessOSMNode0, accessOSMNode1, accessOSMNode0])
+
+    startNodeLong = [node.get_Longitude() for node in startNodes]
+    startNodeLat = [node.get_Latitude() for node in startNodes]
+    endNodeLong = [node.get_Longitude() for node in endNodes]
+    endNodeLat = [node.get_Latitude() for node in endNodes]
+
+    # Batch processing the nearest nodes in one call start and end
+    startNodeOSM = ox.nearest_nodes(speedGraph, X=startNodeLong, Y=startNodeLat)
+    endNodeOSM = ox.nearest_nodes(speedGraph, X=endNodeLong, Y=endNodeLat)
+
+    cores = max(1, os.cpu_count() // 2)
+    thread_map(
+        add_weighted_edge,
+        startNodes,
+        endNodes,
+        repeat(speedGraph),
+        repeat(G),
+        startNodeOSM,
+        endNodeOSM,
+        chunksize=1,
+        total=len(startNodes),
+        max_workers=cores,
+        bar_format="{n_fmt}/{total_fmt} {percentage:3.0f}%",
+        dynamic_ncols=True,
+    )
 
     # Adding edges into networkx graph between access nodes
     # for accessNode in bus_graph:
@@ -304,4 +328,5 @@ def convert_bus_graph_time():
     return G
 
 
-get_bus_graph_networkx()
+if __name__ == "__main__":
+    get_bus_graph_networkx()
