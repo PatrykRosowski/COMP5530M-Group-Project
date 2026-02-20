@@ -11,5 +11,10 @@ flake8-black
 black
 pathlib
 requests
+scipy
+gmplot
+osmnx
+pyrosm
+tqdm
 valhalla
 polyline
