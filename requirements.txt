@@ -16,3 +16,5 @@ gmplot
 osmnx
 pyrosm
 tqdm
+valhalla
+polyline
