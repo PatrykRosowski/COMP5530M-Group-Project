@@ -37,21 +37,21 @@ def addIfNearby(initialNode, targetNode, increment):
 
 # Returns completed bus access node graph
 def get_bus_access_node_graph():
-    # df_data = get_bus_stop_data()  # For the full graph
-    df_data = get_test_data()  # For testing
+    df_data = get_bus_stop_data()  # For the full graph
+    # df_data = get_test_data()  # For testing
     AccessNodeGraph = [AccessNode(data_row) for index, data_row in df_data.iterrows()]
 
     # Generating arrays of all nearby stops for each stop
-    for accessNode in AccessNodeGraph:
-        for increment in range(2, 60):
-            # Adding all nearby nodes
-            for node in AccessNodeGraph:
-                # Don't want each node adding itself
-                if node != accessNode:
-                    addIfNearby(accessNode, node, increment)
+    # for accessNode in AccessNodeGraph:
+    #     for increment in range(2, 60):
+    #         # Adding all nearby nodes
+    #         for node in AccessNodeGraph:
+    #             # Don't want each node adding itself
+    #             if node != accessNode:
+    #                 addIfNearby(accessNode, node, increment)
 
-            if len(accessNode.get_Nearby()) >= MIN_NEARBY_STOPS:
-                break
+    #         if len(accessNode.get_Nearby()) >= MIN_NEARBY_STOPS:
+    #             break
 
     return AccessNodeGraph
 
