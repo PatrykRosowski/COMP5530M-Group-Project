@@ -39,7 +39,7 @@ const MapComponent = () => {
   };
 
   return (
-    <div className="relative h-screen w-screen bg-slate-50 overflow-hidden">
+    <div className="fixed inset-0 h-screen w-screen bg-slate-50 overflow-hidden">
       
       {/* HUD / Status Bar */}
       <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[1000]">
@@ -100,7 +100,7 @@ const MapComponent = () => {
 
       <div className="absolute inset-0 z-0">
         <MapContainer 
-          center={[53.79725, -1.54384]} 
+          center={[53.9921, -1.5391]} 
           zoom={15} 
           className="h-full w-full outline-none"
           zoomControl={false} 
