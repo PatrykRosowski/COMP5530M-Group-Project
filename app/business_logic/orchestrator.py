@@ -1,7 +1,8 @@
 import networkx as nx
+from flask import jsonify
 
 from app.algorithm_engine.path_finder import compute_least_eccentric_path
-from app.utils.graph_helpers import calculate_path_latency
+from app.utils.graph_helpers import calculate_path_latency, get_shape_for_stop_sequence
 from app.business_logic.scenario_generator import (
     select_random_nodes,
     generate_network_config,
@@ -95,4 +96,40 @@ def route_calculation() -> tuple[tuple, int]:
 
     print("Complete")
 
-    return [best_config, best_latency]
+    frontend_response = {
+        'latency': best_latency,
+        'lines': [],
+        'stops': []
+    }
+
+    for path_of_nodes in best_config:
+        geometry = get_shape_for_stop_sequence(G, path_of_nodes)
+        frontend_response['lines'].append(geometry)
+
+    unique_nodes = set(node for path in best_config for node in path)
+
+    for node_id in unique_nodes:
+        node_data = G.nodes[node_id]
+
+        frontend_response['stops'].append({
+            'id': node_id,
+            'lat': node_data['Latitude'],
+            'lon': node_data['Longitude'],
+            'name': node_data['CommonName']
+        })
+
+    print("\n" + "="*30)
+    print(f"FINAL CONFIGURATION (Latency: {best_latency})")
+    for i, line_path in enumerate(best_config):
+        print(f"\nBus Line {i + 1}:")
+        print(f"  Stop Count: {len(line_path)}")
+        print(f"  Stop IDs:   {line_path}")
+        
+        # Optional: Print names if available to make it readable
+        names = [G.nodes[n].get('CommonName', 'Unknown') for n in line_path]
+        print(f"  Stop Names: {names}")
+    print("="*30 + "\n")
+
+    return frontend_response
+
+
