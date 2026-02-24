@@ -1,10 +1,11 @@
 import naptan
 
-AREA_CODE = "320"
+AREA_CODE = "320"  # North Yorkshire post code
+AREA_CODE_2 = "450"  # West Yorkshire post code
 BUS_STOP_TYPE = "BCT"
 COLUMNS = ["ATCOCode", "CommonName", "Street", "Longitude", "Latitude", "StopType"]
 
-df_west_york_stops = naptan.get_area_stops([AREA_CODE])
+df_west_york_stops = naptan.get_area_stops([AREA_CODE, AREA_CODE_2])
 df_west_york_stops_simple = df_west_york_stops.filter(COLUMNS, axis=1)
 
 
@@ -25,4 +26,4 @@ def get_street_data(Streets):
 
 # GET SPECIFIC STOP DATA
 def get_specific_stop_data(ATCOCode):
-    return df_west_york_stops_simple.loc[df_west_york_stops_simple["ATCOCode"] == ATCOCode]
+    return df_west_york_stops_simple.loc[df_west_york_stops_simple["ATCOCode"].isin(ATCOCode)]
