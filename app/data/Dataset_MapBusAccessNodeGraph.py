@@ -1,7 +1,7 @@
 ### Imports ###
 
 
-from Harrogate_GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 import matplotlib.pyplot as plt
 import gmplot
@@ -153,3 +153,4 @@ def map_bus_access_node_graph(vis = 0):
 
 # Runs mapping function, which calls graph generation function
 map_bus_access_node_graph(ROUTES_VIS)
+
