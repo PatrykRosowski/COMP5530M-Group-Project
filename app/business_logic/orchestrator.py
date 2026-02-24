@@ -65,6 +65,12 @@ def route_calculation() -> tuple[tuple, int]:
 
     print("Generating network config")
     all_network_config = generate_network_config(all_line_candidates)
+
+    all_network_config = [
+        config for config in all_network_config
+        if len({tuple(path) for path in config}) == len(config)
+    ]
+
     print("Network config generation completed")
     best_latency = float("inf")
     best_config = None
