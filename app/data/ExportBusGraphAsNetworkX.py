@@ -4,6 +4,7 @@ import requests
 from pathlib import Path
 from haversine import haversine, Unit
 from GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
 from scipy.spatial import Delaunay
 import gmplot
 import osmnx as ox
@@ -180,7 +181,7 @@ def get_distance_haversize_long_lat(initialNode, targetNode):
 
 
 # Returns networkx bus access node graph with weights
-def get_bus_graph_networkx():
+def get_bus_graph_networkx_with_triangulation(): # Altered name to preserve function
     bus_graph = get_bus_access_node_graph()
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
@@ -310,6 +311,100 @@ def get_bus_graph_networkx():
     return G
 
 
+
+### Start of added code ###
+
+# Returns full connected networkx bus AccessNode graph of all possible bus stops (via NaPTAN) with weights
+def get_fully_connected_bus_graph_networkx():
+    bus_graph = get_bus_access_node_graph() # From initial GenerateBusAccessNodeGraph.py
+    G = nx.DiGraph()
+    labels = {}  # For adding custom labels to graph
+
+    # Adding access nodes to networkx graph along with attributes
+    for accessNode in bus_graph:
+        G.add_node(
+            accessNode.get_ATCOCode(),
+            CommonName=accessNode.get_CommonName(),
+            Street=accessNode.get_Street(),
+            Longitude=accessNode.get_Longitude(),
+            Latitude=accessNode.get_Latitude(),
+        )
+        labels[accessNode.get_ATCOCode()] = accessNode.get_CommonName()
+
+    # Adding edges into networkx graph between access nodes
+    for accessNode in bus_graph:
+        # Add edge for all nearby neighbours
+        for neighbour in accessNode.get_Nearby():
+            G.add_edge(
+                accessNode.get_ATCOCode(),
+                neighbour.get_ATCOCode(),
+                weight=get_weight(accessNode, neighbour),
+            )
+
+    # Drawing graph
+    draw_networkx_graph(G, labels)
+
+    # Save graph as graphml - ungku
+    nx.write_graphml_lxml(G, "bus_graph.graphml")
+
+    # Return graph as networkx format
+    return G
+
+
+# Returns networkx bus AccessNode graph of all dataset stops and routes with weights
+def get_dataset_bus_graph_networkx():
+    bus_graph = D_get_bus_access_node_graph() # From Dataset_GenerateBusAccessNodeGraph.py incororating XML data
+    G = nx.DiGraph()
+    labels = {}  # For adding custom labels to graph
+
+    # Adding access nodes to networkx graph along with attributes
+    for accessNode in bus_graph:
+        G.add_node(
+            accessNode.get_ATCOCode(),
+            CommonName=accessNode.get_CommonName(),
+            Street=accessNode.get_Street(),
+            Longitude=accessNode.get_Longitude(),
+            Latitude=accessNode.get_Latitude(),
+        )
+        labels[accessNode.get_ATCOCode()] = accessNode.get_CommonName()
+
+    # Adding edges into networkx graph between access nodes
+    for accessNode in bus_graph:
+        # Add edge for all nearby neighbours
+        for neighbour in accessNode.get_Nearby():
+            G.add_edge(
+                accessNode.get_ATCOCode(),
+                neighbour.get_ATCOCode(),
+                weight=get_weight(accessNode, neighbour),
+            )
+
+    # Drawing graph
+    draw_networkx_graph(G, labels)
+
+    # Save graph as graphml - ungku
+    nx.write_graphml_lxml(G, "bus_graph.graphml")
+
+    # Return graph as networkx format
+    return G
+
+
+# Combining both functions within one call :
+def convert_accessnode_to_networkx(dataset = 0):
+
+    if dataset == 0:
+        G = get_fully_connected_bus_graph_networkx()
+    else if dataset == 1:
+        G = get_dataset_bus_graph_networkx()
+    else:
+        print("Incorrect parameter value")
+
+    return G
+
+
+### End of added code ###
+
+
+
 def convert_bus_graph_time():
     G = get_bus_graph_networkx()
 
@@ -326,7 +421,6 @@ def convert_bus_graph_time():
             print(f"Edge ({u}, {v}) missing {DISTANCE_KEY} attribute.")
 
     return G
-
 
 if __name__ == "__main__":
     get_bus_graph_networkx()
