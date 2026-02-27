@@ -389,7 +389,7 @@ def get_dataset_bus_graph_networkx():
 
 
 # Combining both functions within one call :
-def convert_accessnode_to_networkx(dataset = 0):
+def get_bus_graph_networkx(dataset = 0): # Main function to call
 
     if dataset == 0:
         G = get_fully_connected_bus_graph_networkx()
@@ -423,4 +423,4 @@ def convert_bus_graph_time():
     return G
 
 if __name__ == "__main__":
-    get_bus_graph_networkx()
+    get_bus_graph_networkx(1)
