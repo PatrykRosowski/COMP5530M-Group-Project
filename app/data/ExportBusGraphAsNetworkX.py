@@ -26,10 +26,10 @@ import os
 # URL for getting routing time requests
 OSRM_URL = "http://router.project-osrm.org/route/v1/driving/"
 ROOT_DIR = Path(__file__).resolve().parent.parent
-GRAPH_PATH = Path("bus_graph.graphml")
+GRAPH_PATH = Path(__file__).parent / "bus_graph.graphml"
 
 # Constant parameters
-REGION_MAP = "Data/graph/roads_only.osm.pbf"
+REGION_MAP = str(Path(__file__).parent / "roads_only.osm.pbf")
 MINIMUM_DISTANCE = 100
 
 
@@ -312,7 +312,7 @@ def get_bus_graph_networkx():
     map_networkx_graph_(G, labels)
 
     # Save graph as graphml - ungku
-    nx.write_graphml_lxml(G, "bus_graph.graphml")
+    nx.write_graphml_lxml(G, str(GRAPH_PATH))
 
     # Return graph as networkx format
     return G
