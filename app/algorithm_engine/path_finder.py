@@ -30,55 +30,47 @@ def shortest_distance_to_path(G: nx.DiGraph, node: nx.nodes, path_nodes: list[st
 
 
 def compute_least_eccentric_path(
-    G: nx.DiGraph, start_route: str, end_route: str, K: int
-) -> list[str] | None:
+    G: nx.DiGraph, start_route: nx.nodes, end_route: nx.nodes, K: int
+) -> list[str]:
     """
     Computes a path that minimizes the maximum eccentricity (distance) from all other nodes
     in the graph to the path, chosen from the K shortest paths.
-    
-    This optimization utilizes a reversed graph view and multi-source Dijkstra's 
-    algorithm to efficiently calculate shortest travel times from all nodes to the path 
-    in a single traversal.
 
     Args:
-        G (nx.DiGraph): The directed network graph.
-        start_route (str): The starting node identifier.
-        end_route (str): The ending node identifier.
-        K (int): The number of shortest paths to evaluate.
+        G (nx.DiGraph): The network graph.
+        start_route (nx.nodes): The starting node of the potential line.
+        end_route (nx.nodes): The ending node of the potential line.
+        K (int): The number of shortest paths (via Yen's algorithm equivalent) to evaluate.
 
     Returns:
-        list[str] | None: The path (list of nodes) with the lowest eccentricity,
-                          or None if no valid paths exist or are returned.
+        list[str] or None: The path (list of nodes) with the lowest eccentricity,
+                           or None if no paths exist between start and end.
     """
     try:
-        all_paths = nx.shortest_simple_paths(G, start_route, end_route, weight="travel_time")
-        k_paths = list(islice(all_paths, K)) 
+        all_paths = nx.shortest_simple_paths(
+            G, start_route, end_route, "travel_time"
+        )  # implementation based on yen's k shortest path
+        k_paths = islice(all_paths, K)  # all_path is a generator type
     except nx.NetworkXNoPath:
         print(f"No path found between {start_route} and {end_route}")
-        return None
 
-    if not k_paths:
-        print(f"Path exists between {start_route} and {end_route}, no paths returned K = {K}")
-        return None
-
-    G_rev = G.reverse(copy=False)
-    total_nodes = len(G)
-    
     min_eccentricity = float("inf")
     best_path = None
+    paths_evaluated = 0
 
     for path in k_paths:
-        distances = nx.multi_source_dijkstra_path_length(
-            G_rev, sources=set(path), weight="travel_time"
-        )
-        
-        if len(distances) < total_nodes:
-            eccentricity = float("inf")
-        else:
-            eccentricity = max(distances.values())
-
+        paths_evaluated += 1
+        eccentricity = 0
+        for node in list(G.nodes):
+            distance = shortest_distance_to_path(G, node, path)
+            if distance > eccentricity:
+                eccentricity = distance
         if eccentricity < min_eccentricity:
             min_eccentricity = eccentricity
             best_path = path
+
+    if paths_evaluated == 0:
+        print(f"Path exists between {start_route} and {end_route}, no paths returned K = {K}")
+        return None
 
     return best_path
