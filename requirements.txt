@@ -19,3 +19,4 @@ tqdm
 valhalla
 polyline
 scikit-learn
+PyQt6
