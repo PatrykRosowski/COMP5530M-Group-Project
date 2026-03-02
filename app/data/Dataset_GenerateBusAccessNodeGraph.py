@@ -1,16 +1,11 @@
 ### Imports ###
 
 
-from AccessNode import AccessNode
-
-from GetAccessNodes import get_bus_stop_data
-from GetAccessNodes import get_street_data
-from GetAccessNodes import get_specific_stop_data
+from app.data.AccessNode import AccessNode
+from app.data.GetAccessNodes import get_specific_stop_data
 
 import json
-import pandas as pd
-
-
+import os
 
 ### File Extraction ###
 
@@ -20,7 +15,9 @@ import pandas as pd
 # List of bus-stop codes :
 busCodes = []
 
-with open("AllBusStopData.json", "r") as f:
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(base_dir, "AllBusStopData.json"), "r") as f:
     fileData = json.load(f)
     
     for file in fileData:
@@ -40,9 +37,8 @@ busData = get_specific_stop_data(busCodes)
 ## Bus Routes ##
 
 # List of consecuti
-ve routes :
 routesList = []
-with open("AllRoutesData.json", "r") as g:
+with open(os.path.join(base_dir, "AllRoutesData.json"), "r") as g:
     fileData = json.load(g)
     
     for file in fileData:

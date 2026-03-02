@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import requests
 from pathlib import Path
 from haversine import haversine, Unit
-from GenerateBusAccessNodeGraph import get_bus_access_node_graph
-from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
+from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
 from scipy.spatial import Delaunay
 import gmplot
 import osmnx as ox
@@ -424,4 +424,4 @@ def convert_bus_graph_time():
     return G
 
 if __name__ == "__main__":
-    get_bus_graph_networkx_with_triangulation(1)
+    get_bus_graph_networkx_with_triangulation()
