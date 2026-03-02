@@ -39,8 +39,7 @@ busData = get_specific_stop_data(busCodes)
 
 ## Bus Routes ##
 
-# List of consecuti
-ve routes :
+# List of consecutive routes :
 routesList = []
 with open("AllRoutesData.json", "r") as g:
     fileData = json.load(g)
@@ -96,3 +95,4 @@ def get_bus_access_node_graph(vis = 0):
 ### Main ###
 
 # get_bus_access_node_graph()
+
