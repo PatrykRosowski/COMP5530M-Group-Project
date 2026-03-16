@@ -4,7 +4,7 @@ import requests
 from pathlib import Path
 from haversine import haversine, Unit
 from GenerateBusAccessNodeGraph import get_bus_access_node_graph
-from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
+from Bus_Mapping.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
 from scipy.spatial import Delaunay
 import gmplot
 import osmnx as ox
@@ -393,7 +393,7 @@ def get_bus_graph_networkx(dataset = 0): # Main function to call
 
     if dataset == 0:
         G = get_fully_connected_bus_graph_networkx()
-    else if dataset == 1:
+    elif dataset == 1:
         G = get_dataset_bus_graph_networkx()
     else:
         print("Incorrect parameter value")
