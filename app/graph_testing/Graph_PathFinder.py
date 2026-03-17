@@ -256,19 +256,19 @@ for node in graph:
         end_ind = graph.index(node)
 
 # OR input index of nodes -
-start_ind = 213
-end_ind = 579
+# start_ind = 213
+# end_ind = 579
 
 
 # Using A* and obtaining optimal path + cost
 
 # Using randomly chosen points :
-# nodes = generate_random_endstops(graph)
-# start_ind, end_ind = graph.index(nodes[0]), graph.index(nodes[1])
-# solution_path, total_cost = Shortest_Path_Sim(graph, nodes[0], nodes[1])
+nodes = generate_random_endstops(graph)
+start_ind, end_ind = graph.index(nodes[0]), graph.index(nodes[1])
+solution_path, total_cost = Shortest_Path_Sim(graph, nodes[0], nodes[1])
 
 # Using custom chosen points :
-solution_path, total_cost = Shortest_Path_Sim(graph, graph[start_ind], graph[end_ind])
+# solution_path, total_cost = Shortest_Path_Sim(graph, graph[start_ind], graph[end_ind])
 
 
 ## -- Print statements (for debugging) -- ##
@@ -328,4 +328,4 @@ def plot_solution(sol_array, name):
 
 
 # Plotting solution in gmplot
-plot_solution(solution_path, f"solutions/{start_ind}-to-{end_ind}_sol.html")
+plot_solution(solution_path, f"app/graph_testing/solutions/{start_ind}-to-{end_ind}_sol.html")

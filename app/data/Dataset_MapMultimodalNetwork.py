@@ -8,17 +8,17 @@ from Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 
 ## -- Obtains graph of BUS ROUTES and WALKING PATHS -- ##
 
-def get_multimodal_graph(plot = 0):
-    
+
+def get_multimodal_graph(plot=0):
+
     graph = get_bus_access_node_graph()
-    
+
     graph = add_walking_paths(graph)
-    
+
     if plot == 1:
-        plot_in_gmplot(graph, "./Maps/Mapsmultimodal_network.html", vis = 1)
+        plot_in_gmplot(graph, "./Maps/Mapsmultimodal_network.html", vis=1)
 
     return graph
-
 
 
 ### --- Main --- ###
@@ -27,13 +27,15 @@ graph = get_multimodal_graph()
 
 
 # Converting AccessNode graph to pickle file :
-WANT_PICKLE = 0
+WANT_PICKLE = 1
 if WANT_PICKLE == True:
     import sys
+
     sys.setrecursionlimit(5000)
     import pickle
-    pickle.dump(graph, open("multimodal_graph.pkl", "wb"))
 
+    pickle.dump(graph, open("multimodal_graph.pkl", "wb"))
+    pickle.dump(graph, open("app/graph_testing/multimodal_graph.pkl", "wb"))
 
 
 ### --- Other Functions --- ###
@@ -41,7 +43,8 @@ if WANT_PICKLE == True:
 
 # Debug function to view AcessNode.Nearby Data :
 
-def print_all_connection_data(graph, limit = -1):
+
+def print_all_connection_data(graph, limit=-1):
 
     count = 0
     for node in graph:
@@ -49,10 +52,10 @@ def print_all_connection_data(graph, limit = -1):
         count += 1
         if count == limit:
             break
-        
-        connected_nodes = node.Nearby 
+
+        connected_nodes = node.Nearby
         replace = []
-        
+
         for i in connected_nodes:
             j = (i[0].get_ATCOCode(),) + i[1:]
             replace.append(j)
@@ -60,10 +63,9 @@ def print_all_connection_data(graph, limit = -1):
         for j in replace:
             connected_nodes.append(j)
         print(replace)
-        
-#print_all_connection_data(graph, 10)
 
 
+# print_all_connection_data(graph, 10)
 
 
 ## -- MatPlotLib Mapping -- ##
@@ -71,22 +73,25 @@ def print_all_connection_data(graph, limit = -1):
 # Note :
 # This section allows for the bus routes and
 # walking paths to be togglable when viewed.
-        
+
 import matplotlib.pyplot as plt
 from matplotlib.widgets import CheckButtons
 from gmplot.color import _HTML_COLOR_CODES as colours
 
 # Getting ductionary of colours
 import random
-def shuffle_dict(d:dict):
+
+
+def shuffle_dict(d: dict):
     return {k: d[k] for k in random.choices(list(d.keys()), k=len(d))}
+
+
 colour_dict = {}
 colours = shuffle_dict(colours)
 colour_list = list(colours.keys())
 num_col = 21
-for i in range(1,len(colours)):
+for i in range(1, len(colours)):
     colour_dict[i] = colour_list[i]
-
 
 
 def plot_in_matplotlib(graph, vis=0):
@@ -98,33 +103,32 @@ def plot_in_matplotlib(graph, vis=0):
 
     for accessNode in graph:
 
-        ax.plot(accessNode.get_Longitude(),
-                accessNode.get_Latitude(),
-                marker="o",
-                markersize=6)
+        ax.plot(accessNode.get_Longitude(), accessNode.get_Latitude(), marker="o", markersize=6)
 
-        ax.text(accessNode.get_Longitude(),
-                accessNode.get_Latitude(),
-                accessNode.get_CommonName(),
-                fontsize=5)
+        ax.text(
+            accessNode.get_Longitude(),
+            accessNode.get_Latitude(),
+            accessNode.get_CommonName(),
+            fontsize=5,
+        )
 
         for nearbyNode in accessNode.get_Nearby():
 
             if nearbyNode[1] == "bus":
-                line, = ax.plot(
+                (line,) = ax.plot(
                     [accessNode.get_Longitude(), nearbyNode[0].get_Longitude()],
                     [accessNode.get_Latitude(), nearbyNode[0].get_Latitude()],
                     color=colour_dict[nearbyNode[2]],
-                    linewidth=4
+                    linewidth=4,
                 )
                 bus_lines.append(line)
 
             if nearbyNode[1] == "walk":
-                line, = ax.plot(
+                (line,) = ax.plot(
                     [accessNode.get_Longitude(), nearbyNode[0].get_Longitude()],
                     [accessNode.get_Latitude(), nearbyNode[0].get_Latitude()],
                     color="black",
-                    linewidth=1
+                    linewidth=1,
                 )
                 walk_lines.append(line)
 
@@ -133,14 +137,14 @@ def plot_in_matplotlib(graph, vis=0):
 
     # Checkbox area
     rax = ax.inset_axes([0.02, 0.02, 0.15, 0.15])
-    check = CheckButtons(rax, ['Bus', 'Walk'], [True, True])
+    check = CheckButtons(rax, ["Bus", "Walk"], [True, True])
 
     def toggle(label):
-        if label == 'Bus':
+        if label == "Bus":
             for line in bus_lines:
                 line.set_visible(not line.get_visible())
 
-        elif label == 'Walk':
+        elif label == "Walk":
             for line in walk_lines:
                 line.set_visible(not line.get_visible())
 
@@ -150,7 +154,8 @@ def plot_in_matplotlib(graph, vis=0):
 
     plt.show()
 
-    #import pickle
-    #pickle.dump(fig, open('TogglableMultimodalGraph.fig.pickle', 'wb'))
+    # import pickle
+    # pickle.dump(fig, open('TogglableMultimodalGraph.fig.pickle', 'wb'))
 
-#plot_in_matplotlib(graph)
+
+# plot_in_matplotlib(graph)
