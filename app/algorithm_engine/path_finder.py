@@ -1,5 +1,6 @@
 import networkx as nx
 from itertools import islice
+import math
 
 
 def shortest_distance_to_path(G: nx.DiGraph, node: nx.nodes, path_nodes: list[str]) -> float:
@@ -15,18 +16,15 @@ def shortest_distance_to_path(G: nx.DiGraph, node: nx.nodes, path_nodes: list[st
         float: The minimum travel time from the start node to the closest node in the path_nodes list.
                Returns infinity if no path exists.
     """
-    min_distance = float("inf")
-    for p in path_nodes:
-        try:
-            dist = nx.shortest_path_length(
-                G, node, p, weight="travel_time"
-            )  # default to djikstra with travel time as weight
-            if dist < min_distance:
-                min_distance = dist
-        except nx.NetworkXNoPath:
-            continue
+    # Using networkx more improved function for finding minimum distance
+    try:
 
-    return min_distance
+        distance, _ = nx.multi_source_dijkstra(
+            G.reverse(copy=False), path_nodes, node, weight="travel_time"
+        )
+        return distance
+    except nx.NetworkXNoPath:
+        return float("inf")
 
 
 def compute_least_eccentric_path(
@@ -63,7 +61,7 @@ def compute_least_eccentric_path(
         eccentricity = 0
         for node in list(G.nodes):
             distance = shortest_distance_to_path(G, node, path)
-            if distance > eccentricity:
+            if distance > eccentricity and not math.isinf(distance):
                 eccentricity = distance
         if eccentricity < min_eccentricity:
             min_eccentricity = eccentricity
