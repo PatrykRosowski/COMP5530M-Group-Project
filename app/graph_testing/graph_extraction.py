@@ -9,7 +9,15 @@ def get_weight_bus(accessNode0, accessNode1):
 
     G = nx.read_graphml(BUS_GRAPH)
 
-    edgeAttributes = G.get_edge_data(accessNode0.ATCOCode, accessNode1.ATCOCode)
-    edgeWeight = edgeAttributes.get("weight", 0)
+    # If the entries are strings, pass straight
+    if isinstance(accessNode0, str):
+        edgeAttributes = G.get_edge_data(accessNode0, accessNode1)
+    else:
+        edgeAttributes = G.get_edge_data(accessNode0.ATCOCode, accessNode1.ATCOCode)
 
-    return edgeWeight
+    # If the edge exists
+    if edgeAttributes != None:
+        edgeWeight = edgeAttributes.get("weight", 0)
+        return edgeWeight
+    else:  # If the edge does not exist
+        return None
