@@ -74,7 +74,7 @@ def get_bus_access_node_graph():
             # ATCO Code -> AccessNode object
             curNode = CodeToNode[start]
 
-            AccessNode.addNearbyStop(curNode, (CodeToNode[end], "bus", bus_route_num))
+            AccessNode.addNearbyStop(curNode, (CodeToNode[end], "bus", bus_route_num)) # (Node, mode, route)
 
     return AccessNodeGraph
 
