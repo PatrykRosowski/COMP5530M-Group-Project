@@ -4,7 +4,7 @@ import requests
 from pathlib import Path
 from haversine import haversine, Unit
 from GenerateBusAccessNodeGraph import get_bus_access_node_graph
-from Bus_Mapping.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
+from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
 from scipy.spatial import Delaunay
 import gmplot
 import osmnx as ox
@@ -181,7 +181,7 @@ def get_distance_haversize_long_lat(initialNode, targetNode):
 
 
 # Returns networkx bus access node graph with weights
-def get_bus_graph_networkx_with_triangulation(): # Altered name to preserve function
+def get_bus_graph_networkx_with_triangulation():  # Altered name to preserve function
     bus_graph = get_bus_access_node_graph()
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
@@ -311,12 +311,12 @@ def get_bus_graph_networkx_with_triangulation(): # Altered name to preserve func
     return G
 
 
-
 ### Start of added code ###
+
 
 # Returns full connected networkx bus AccessNode graph of all possible bus stops (via NaPTAN) with weights
 def get_fully_connected_bus_graph_networkx():
-    bus_graph = get_bus_access_node_graph() # From initial GenerateBusAccessNodeGraph.py
+    bus_graph = get_bus_access_node_graph()  # From initial GenerateBusAccessNodeGraph.py
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
 
@@ -353,7 +353,7 @@ def get_fully_connected_bus_graph_networkx():
 
 # Returns networkx bus AccessNode graph of all dataset stops and routes with weights
 def get_dataset_bus_graph_networkx():
-    bus_graph = D_get_bus_access_node_graph() # From Dataset_GenerateBusAccessNodeGraph.py incororating XML data
+    bus_graph = (D_get_bus_access_node_graph())  # From Dataset_GenerateBusAccessNodeGraph.py incororating XML data
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
 
@@ -374,7 +374,7 @@ def get_dataset_bus_graph_networkx():
         for neighbour in accessNode.get_Nearby():
             G.add_edge(
                 accessNode.get_ATCOCode(),
-                neighbour.get_ATCOCode(),
+                neighbour[0].get_ATCOCode(),
                 weight=get_weight(accessNode, neighbour),
             )
 
@@ -389,7 +389,7 @@ def get_dataset_bus_graph_networkx():
 
 
 # Combining both functions within one call :
-def get_bus_graph_networkx(dataset = 0): # Main function to call
+def get_bus_graph_networkx(dataset=0):  # Main function to call
 
     if dataset == 0:
         G = get_fully_connected_bus_graph_networkx()
@@ -402,7 +402,6 @@ def get_bus_graph_networkx(dataset = 0): # Main function to call
 
 
 ### End of added code ###
-
 
 
 def convert_bus_graph_time():
@@ -421,6 +420,7 @@ def convert_bus_graph_time():
             print(f"Edge ({u}, {v}) missing {DISTANCE_KEY} attribute.")
 
     return G
+
 
 if __name__ == "__main__":
     get_bus_graph_networkx(1)

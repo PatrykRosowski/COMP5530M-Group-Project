@@ -59,7 +59,7 @@ def plot_in_matplotlib(graph, vis=0):
                 plt.plot(
                     [accessNode.get_Longitude(), nearbyNode[0].get_Longitude()],
                     [accessNode.get_Latitude(), nearbyNode[0].get_Latitude()],
-                    color=colour_dict[nearbyNode[1]],
+                    color=colour_dict[nearbyNode[2]],
                 )
             else:
                 plt.plot(
