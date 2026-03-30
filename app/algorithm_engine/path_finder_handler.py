@@ -1,7 +1,7 @@
 import networkx as nx
 import os
-from path_finder import compute_least_eccentric_path
-from ..data.ExportBusGraphAsNetworkX import get_bus_graph_networkx
+from app.algorithm_engine.path_finder import compute_least_eccentric_path
+from app.data.ExportBusGraphAsNetworkX import get_bus_graph_networkx
 
 BUS_GRAPH = "bus_graph.graphml"
 
