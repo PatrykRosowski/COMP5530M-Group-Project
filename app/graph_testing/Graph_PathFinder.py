@@ -252,9 +252,9 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict = {}):
             newNode.mode = nodeData[1:]  # also update mode used along this edge (including bus_route)
             newNode.edge = edge_weight
 
-            print(".",end='') # computation progress for debug
+            # print(".",end='') # computation progress for debug
 
-        print(f"{count},,",end='') # computation progress for debug
+        # print(f"{count},,",end='') # computation progress for debug
 
     return Exception("Failure, could not compute path from start to end."), float("inf")
 
