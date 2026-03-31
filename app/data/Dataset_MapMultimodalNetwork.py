@@ -1,9 +1,10 @@
 ## -- Imports -- ##
 
 from AccessNode import AccessNode
-from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
-from Dataset_GenerateWalkingPaths import add_walking_paths
-from Dataset_MapBusAccessNodeGraph import plot_in_gmplot
+if __name__ == '__main__':
+    from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
+    from Dataset_GenerateWalkingPaths import add_walking_paths
+    from Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 
 
 ## -- Obtains graph of BUS ROUTES and WALKING PATHS -- ##

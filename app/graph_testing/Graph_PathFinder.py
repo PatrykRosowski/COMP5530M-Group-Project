@@ -6,17 +6,27 @@
 ### --- Imports --- ###
 
 
-from AccessNode import AccessNode
-from WalkingEdgeWeight import euclidian_distance
-from WalkingEdgeWeight import return_walking_edge_weight
-# from graph_extraction import get_weight_bus
+from app.graph_testing.AccessNode import AccessNode
+# if __name__ == "__main__":
+#     from WalkingEdgeWeight import euclidian_distance
+#     from WalkingEdgeWeight import return_walking_edge_weight
+#     from BusEdgeWeight import get_weight_bus
+# else:
+from app.graph_testing.WalkingEdgeWeight import euclidian_distance
+from app.graph_testing.WalkingEdgeWeight import return_walking_edge_weight
+from app.graph_testing.BusEdgeWeight import get_weight_bus
+from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.Dataset_GenerateWalkingPaths import add_walking_paths
 
 from math import sin, cos, sqrt, atan2, radians  # for Haversine distance
 import pickle
 import random
 import gmplot
 import time
+import networkx as nx
 
+# Constant that leads to bus graph graph ml file
+BUS_GRAPH = "bus_graph.graphml"
 
 ### --- Functions --- ###
 
@@ -47,8 +57,8 @@ def path_cost(edge_weight, nodeData, prev_mode):
     PunishmentMultiplyer = {
         "bus": 1,
         "tram": 1,
-        "walk": 10,
-        "change": 3,  # waiting-time penalty for a new bus
+        "walk": 30,
+        "change": 100,  # waiting-time penalty for a new bus
     }
     Bus_Waiting_Cost = 20  # waiting-time for a bus
 
@@ -105,14 +115,19 @@ def path_cost(edge_weight, nodeData, prev_mode):
     ## -- End of Function -- ##
 
 
-def get_weight(start_node, end_node, mode):
+def get_weight(G, start_node, end_node, mode):
 
     if mode == "walk":
         weight = return_walking_edge_weight(start_node, end_node)
+        # weight = 100
+        # print(f"walking weight = {weight}")
+    elif mode == "bus":
+        weight = get_weight_bus(G, start_node, end_node)
         # weight = 1
-    if mode == "bus":
-        # weight = get_weight_bus(start_node, end_node)
-        weight = 200
+        # print(weight)
+        # print(f"bus weight = {weight}")
+    else:
+        raise ValueError(f"Unknown mode: '{mode}', {type(mode)}")
 
     return weight
 
@@ -135,7 +150,11 @@ class AStarNode:
         self.mode = None        # For tracking the mode of transport
 
 
-def Shortest_Path_Sim(graph, start, dest, edge_weight_dict = {}):
+def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict = {}):
+
+    # Note: edge_weight_dict format = { (startNode, endNode, transportMode) : weight_value }
+
+    G = nx.read_graphml(BUS_GRAPH)
 
     ## -- Implements A* search -- ##
 
@@ -157,6 +176,7 @@ def Shortest_Path_Sim(graph, start, dest, edge_weight_dict = {}):
 
     queue = [start]  # Priority Queue
     visited_nodes = []  # Stores nodes with guaranteed shortest path found
+
     # For storing computed weights:
     # edge_weight_dict = {} # Format = { (startNode, endNode, transportMode) : weight_value }
 
@@ -202,41 +222,44 @@ def Shortest_Path_Sim(graph, start, dest, edge_weight_dict = {}):
         for nodeData in nodeOptions:
 
             count[1] += 1
-            new_node = nodeData[0]
+            newNode = nodeData[0]
 
-            if new_node in visited_nodes:
+            if newNode in visited_nodes:
                 continue  # skip nodes already evaluated
 
             # Since node is unevaluated, calculate the edge weight
-            if (curNode, new_node, nodeData[1]) in edge_weight_dict.keys():
-                edge_weight = edge_weight_dict[(curNode, new_node, nodeData[1])]
+            if (curNode, newNode, nodeData[1]) in edge_weight_dict.keys():
+                edge_weight = edge_weight_dict[(curNode, newNode, nodeData[1:])]
             else:
-                edge_weight = get_weight(curNode, new_node, nodeData[1])
-                edge_weight_dict[(curNode, new_node, nodeData[1])] = edge_weight
+                edge_weight = get_weight(G, curNode, newNode, nodeData[1])
+                edge_weight_dict[(curNode, newNode, nodeData[1:])] = edge_weight
+                if nodeData[1] == "walk":
+                    edge_weight_dict[(newNode, curNode, nodeData[1:])] = edge_weight
 
             # Calculating tentative g score: Cost till previous node + (edge-weight x cost_function)
             proposed_g = curNode.g + path_cost(edge_weight, nodeData, curNode.mode)
 
-            if new_node not in queue:
-                queue.append(new_node)  # adding previously unseen nodes to the priority queue
+            if newNode not in queue:
+                queue.append(newNode)  # adding previously unseen nodes to the priority queue
 
             # Node is already in priority queue, verify whether proposed value is optimal (lower)
-            elif proposed_g >= new_node.g:
+            elif proposed_g >= newNode.g:
                 continue  # do not update less-efficient paths
 
             # Current node is new or has best/better path from the start node.
 
             ## -- Updating cost values -- ##
 
-            new_node.g = curNode.g + path_cost(edge_weight, nodeData, curNode.mode)
-            new_node.f = new_node.g + new_node.h
-            new_node.parent = curNode
-            new_node.mode = nodeData[1:]  # also update mode used along this edge (including bus_route)
-            new_node.edge = edge_weight
+            newNode.g = proposed_g # curNode.g + path_cost(edge_weight, nodeData, curNode.mode)
+            #print()
+            newNode.f = newNode.g + newNode.h
+            newNode.parent = curNode
+            newNode.mode = nodeData[1:]  # also update mode used along this edge (including bus_route)
+            newNode.edge = edge_weight
 
-            print(".",end='')
+            print(".",end='') # computation progress for debug
 
-        print(f"{count},,",end='')
+        print(f"{count},,",end='') # computation progress for debug
 
     return Exception("Failure, could not compute path from start to end."), float("inf")
 
@@ -247,101 +270,106 @@ def Shortest_Path_Sim(graph, start, dest, edge_weight_dict = {}):
 
 ### --- Main --- ###
 
-# graph = get_multimodal_graph()
-graph = pickle.load(open("multimodal_graph.pkl", "rb"))
+if __name__ == '__main__':
 
-# Input ATCO code or Common Name of bus stop :
+    graph = get_bus_access_node_graph("Manchester")
+    graph = add_walking_paths(graph)
+    # graph = pickle.load(open("app/data_files/harrogate_multimodal_graph.pkl", "rb"))
 
-START_NODE = '3200YNA96823'
-END_NODE = '450051367'
+    # Input ATCO code or Common Name of bus stop :
 
-start_ind = None
-end_ind = None
+    #'''
+    START_NODE = '1800NE07821'
+    END_NODE = '1800NF10241'
 
-for node in graph:
+    start_ind = None
+    end_ind = None
 
-    if node.ATCOCode == START_NODE or node.CommonName == START_NODE:
-        start_ind = graph.index(node)
+    for node in graph:
 
-    if node.ATCOCode == END_NODE or node.CommonName == END_NODE:
-        end_ind = graph.index(node)
+        if node.ATCOCode == START_NODE or node.CommonName == START_NODE:
+            start_ind = graph.index(node)
 
-# OR input index of nodes -
-# start_ind = 213
-# end_ind = 579
+        if node.ATCOCode == END_NODE or node.CommonName == END_NODE:
+            end_ind = graph.index(node)
 
+    # OR input index of nodes -
+    # start_ind = 213
+    # end_ind = 579
 
-# Using A* and obtaining optimal path + cost
+    print(start_ind, end_ind)
+    #'''
 
-start_time = time.time()
+    # Using A* and obtaining optimal path + cost
 
-# Using randomly chosen points :
-nodes = generate_random_endstops(graph)
-start_ind, end_ind = graph.index(nodes[0]), graph.index(nodes[1])
+    start_time = time.time()
 
-# Running A* and obtaining solution :
-solution_path, total_cost = Shortest_Path_Sim(graph, graph[start_ind], graph[end_ind])
+    # Using randomly chosen points :
+    # nodes = generate_random_endstops(graph)
+    # start_ind, end_ind = graph.index(nodes[0]), graph.index(nodes[1])
 
-end_time = time.time()
-print(f"\n\nGraph generated succesfully in time {end_time-start_time:.3f}\n")
+    # Running A* and obtaining solution :
+    solution_path, total_cost = Shortest_Path_Simulation(graph, graph[start_ind], graph[end_ind])
 
-## -- Print statements (for debugging) -- ##
+    end_time = time.time()
+    print(f"\n\nGraph generated succesfully in time {end_time-start_time:.3f}\n")
 
-print(f"Journey from node {graph[start_ind].get_ATCOCode()} ({graph[start_ind].CommonName}) ",end='')
-print(f"to node {graph[end_ind].get_ATCOCode()} ({graph[end_ind].CommonName})")
-print(f"Total Cost of journey = {total_cost}")
-count = 0
-for node in solution_path:
-    count += 1
-    print(f"{count}. {node[0].get_ATCOCode()}: mode = {node[1:]}")
+    ## -- Print statements (for debugging) -- ##
 
-
-
-## -- Plotting the solution -- ##
-
-
-def plot_solution(sol_array, name):
-
-    # sol_array[i] = (parent_node, edge_weight_travelled, mode_of_travel)
-    colours = ["blue", "orange", "green", "red", "purple"]
-    used_routes = []
-    gmap = gmplot.GoogleMapPlotter(54.05, -1.42, 12)
-
-    first = True  # Flag variable keeping track of whether on starting node
-    i = 0  # Keep track of position in solution array
-
-    for node in sol_array:
-        lat = node[0].get_Latitude()
-        lon = node[0].get_Longitude()
-
-        if i > 0 and sol_array[i - 1][2][0] == "bus" and sol_array[i - 1][2][1] not in used_routes:
-            used_routes.append(sol_array[i - 1][2][1])
-
-        # Plot node as marker
-        gmap.marker(lat, lon, title=node[0].get_CommonName())
-
-        if first == False:
-            lat2 = sol_array[i - 1][0].get_Latitude()
-            lon2 = sol_array[i - 1][0].get_Longitude()
-
-            if sol_array[i - 1][2][0] == "bus":
-                # Colourful edge for bus
-                gmap.plot(
-                    [lat, lat2],
-                    [lon, lon2],
-                    edge_width=6,
-                    color=colours[used_routes.index(sol_array[i - 1][2][1])],
-                )
-            else:
-                # Black edge for walking path
-                gmap.plot([lat, lat2], [lon, lon2], edge_width=3)
-
-        first = False  # After running once, start node computed. Turn flag variable off.
-        i += 1  # Update index of current node
-
-    # Output to HTML file
-    gmap.draw(name)
+    print(f"Journey from node {graph[start_ind].get_ATCOCode()} ({graph[start_ind].CommonName}) ",end='')
+    print(f"to node {graph[end_ind].get_ATCOCode()} ({graph[end_ind].CommonName})")
+    print(f"Total Cost of journey = {total_cost}\n")
+    count = 0
+    for node in solution_path:
+        count += 1
+        print(f"{count}. {node[0].get_ATCOCode()}: mode = {node[1:]}")
+    print()
 
 
-# Plotting solution in gmplot
-# plot_solution(solution_path, f"app/graph_testing/solutions/{start_ind}-to-{end_ind}_sol.html")
+    ## -- Plotting the solution -- ##
+
+    def plot_solution(sol_array, name):
+
+        # sol_array[i] = (parent_node, edge_weight_travelled, mode_of_travel)
+        colours = ["blue", "orange", "green", "red", "purple", "yellow", "pink", "white"]
+        used_routes = []
+        gmap = gmplot.GoogleMapPlotter(54.05, -1.42, 12)
+
+        first = True  # Flag variable keeping track of whether on starting node
+        i = 0  # Keep track of position in solution array
+
+        for node in sol_array:
+            lat = node[0].get_Latitude()
+            lon = node[0].get_Longitude()
+
+            if i > 0 and sol_array[i - 1][2][0] == "bus" and sol_array[i - 1][2][1] not in used_routes:
+                used_routes.append(sol_array[i - 1][2][1])
+
+            # Plot node as marker
+            gmap.marker(lat, lon, title=node[0].get_CommonName())
+
+            if first == False:
+                lat2 = sol_array[i - 1][0].get_Latitude()
+                lon2 = sol_array[i - 1][0].get_Longitude()
+
+                if sol_array[i - 1][2][0] == "bus":
+                    # Colourful edge for bus
+                    gmap.plot(
+                        [lat, lat2],
+                        [lon, lon2],
+                        edge_width=6,
+                        color=colours[used_routes.index(sol_array[i - 1][2][1])],
+                    )
+                else:
+                    # Black edge for walking path
+                    gmap.plot([lat, lat2], [lon, lon2], edge_width=3)
+
+            first = False  # After running once, start node computed. Turn flag variable off.
+            i += 1  # Update index of current node
+
+        # Output to HTML file
+        gmap.draw(name)
+
+
+    # Plotting solution in gmplot
+    plot_solution(solution_path, f"app/graph_testing/solutions/{start_ind}-to-{end_ind}_sol.html")
