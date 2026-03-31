@@ -1,9 +1,7 @@
 ## -- Imports -- ##
 
 from math import sin, cos, sqrt, atan2, radians  # for Haversine distance
-from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
-from Dataset_MapBusAccessNodeGraph import plot_in_gmplot
-from AccessNode import AccessNode
+from app.data.AccessNode import AccessNode
 
 import time
 
@@ -58,8 +56,8 @@ def add_walking_paths(graph):
                 # i.e. any node outside WALKING_DIST_RADIUS "must" be further away
                 # So here, taking the distance < 500m, add walking edges if they are within 500m staright-line distance
 
-                AccessNode.addNearbyStop(curNode, (compNode, None, "walk", None)) # (Node, weight, mode, route)
-                AccessNode.addNearbyStop(compNode, (curNode, None, "walk", None)) # (Node, weight, mode, route)
+                AccessNode.addNearbyStop(curNode, (compNode, "walk", None)) # (Node, mode, route)
+                AccessNode.addNearbyStop(compNode, (curNode, "walk", None)) # (Node, mode, route)
                 # Need to make the path bi-directional
 
     return graph
@@ -67,15 +65,21 @@ def add_walking_paths(graph):
 
 ## -- Main -- ##
 
-# Runs mapping function, which calls graph generation function
-graph = get_bus_access_node_graph()
-for node in graph:
-    node.Nearby = []  # Removes all existing bus edges
 
-start = time.time()
-graph = add_walking_paths(graph)  # Adds walking path edges
-end = time.time()
-# print(f"Walking paths succesfully added in time {end-start:.3f}")
+if __name__ == '__main__':
+        
+    from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
+    from Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 
-if PLOT_WALK == 1:
-    plot_in_gmplot(graph, "apps/data/Walking_Path_Generation/Maps/walking_paths_map.html")
+    # Runs mapping function, which calls graph generation function
+    graph = get_bus_access_node_graph()
+    for node in graph:
+        node.Nearby = []  # Removes all existing bus edges
+
+    start = time.time()
+    graph = add_walking_paths(graph)  # Adds walking path edges
+    end = time.time()
+    # print(f"Walking paths succesfully added in time {end-start:.3f}")
+
+    if PLOT_WALK == 1:
+        plot_in_gmplot(graph, "apps/data/Walking_Path_Generation/Maps/walking_paths_map.html")
