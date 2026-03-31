@@ -1,6 +1,6 @@
 ### --- Imports --- ###
 
-from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
 
 import matplotlib.pyplot as plt
 import gmplot
@@ -73,7 +73,7 @@ def plot_in_matplotlib(graph, vis=0):
 ## -- GMPlot Mapping -- ##
 
 
-def plot_in_gmplot(graph, graph_name, vis=0):
+def plot_in_gmplot(graph, graph_path_name, vis=0):
 
     gmap = gmplot.GoogleMapPlotter(54.05, -1.42, 12)
 
@@ -101,7 +101,7 @@ def plot_in_gmplot(graph, graph_name, vis=0):
                 gmap.plot(lat_list, lon_list, edge_width=2)
 
     # Output to HTML file
-    gmap.draw(graph_name)
+    gmap.draw(graph_path_name)
 
 
 ## -- Folium Mapping -- ##

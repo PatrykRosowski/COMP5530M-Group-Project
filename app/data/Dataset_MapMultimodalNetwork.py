@@ -1,10 +1,9 @@
 ## -- Imports -- ##
 
-from AccessNode import AccessNode
-if __name__ == '__main__':
-    from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
-    from Dataset_GenerateWalkingPaths import add_walking_paths
-    from Dataset_MapBusAccessNodeGraph import plot_in_gmplot
+from app.data.AccessNode import AccessNode
+from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.Dataset_GenerateWalkingPaths import add_walking_paths
+from app.data.Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 
 
 ## -- Obtains graph of BUS ROUTES and WALKING PATHS -- ##
@@ -17,7 +16,7 @@ def get_multimodal_graph(plot=0):
     graph = add_walking_paths(graph)
 
     if plot == 1:
-        plot_in_gmplot(graph, "./Maps/Mapsmultimodal_network.html", vis=1)
+        plot_in_gmplot(graph, "app/data/Maps/Mapsmultimodal_network.html", vis=1)
 
     return graph
 
@@ -35,8 +34,8 @@ if WANT_PICKLE == True:
     sys.setrecursionlimit(5000)
     import pickle
 
-    pickle.dump(graph, open("multimodal_graph.pkl", "wb"))
-    pickle.dump(graph, open("app/graph_testing/multimodal_graph.pkl", "wb"))
+    #pickle.dump(graph, open("multimodal_graph.pkl", "wb"))
+    pickle.dump(graph, open("app/data_files/multimodal_graph.pkl", "wb"))
 
 
 ### --- Other Functions --- ###

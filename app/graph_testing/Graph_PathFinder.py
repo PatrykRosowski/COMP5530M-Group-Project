@@ -6,12 +6,7 @@
 ### --- Imports --- ###
 
 
-from app.graph_testing.AccessNode import AccessNode
-# if __name__ == "__main__":
-#     from WalkingEdgeWeight import euclidian_distance
-#     from WalkingEdgeWeight import return_walking_edge_weight
-#     from BusEdgeWeight import get_weight_bus
-# else:
+from app.data.AccessNode import AccessNode
 from app.graph_testing.WalkingEdgeWeight import euclidian_distance
 from app.graph_testing.WalkingEdgeWeight import return_walking_edge_weight
 from app.graph_testing.BusEdgeWeight import get_weight_bus

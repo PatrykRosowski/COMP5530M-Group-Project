@@ -10,7 +10,7 @@ import gmplot
 from app.data.AccessNode import AccessNode
 from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
 from app.data.Dataset_GenerateWalkingPaths import add_walking_paths
-# from data.Dataset_MapBusAccessNodeGraph import plot_in_gmplot
+from app.data.Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 from app.utils.heatmap_controller import get_heatmap_pairs
 from app.graph_testing.Graph_PathFinder import Shortest_Path_Simulation #, PrintCost()
 
@@ -127,6 +127,9 @@ if __name__ == '__main__':
     end = time.time()
     print(f"Walking paths generated in time {end-start:.2f} seconds.\n")
 
+    # Displaying graph :
+    plot_in_gmplot(graph, "app/evaluation/solutions/graph_with_hm_points.html")
+
     start = time.time()
     solution_stats = {} # { 1: (path, cost), 2: (path, cost), ... }
     time_arr = []
@@ -157,7 +160,10 @@ if __name__ == '__main__':
 
     count = 0
     for path in solution_stats:
-         count+=1
-         plot_solution(solution_stats[path][0], f"app/evaluation/solutions/file_num_{count}.html")
+        count+=1
+        try:
+            plot_solution(solution_stats[path][0], f"app/evaluation/solutions/file_num_{count}.html")
+        except:
+            print(f"Exception occured, couldn't generate for file {count}")
 
     ## -- End of script -- ##
