@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 import requests
 from pathlib import Path
 from haversine import haversine, Unit
-from GenerateBusAccessNodeGraph import get_bus_access_node_graph
-from Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph as D_get_bus_access_node_graph
+from app.data.GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.Dataset_GenerateBusAccessNodeGraph import (
+    get_bus_access_node_graph as D_get_bus_access_node_graph,
+)
 from scipy.spatial import Delaunay
 import gmplot
 import osmnx as ox
@@ -353,7 +355,9 @@ def get_fully_connected_bus_graph_networkx():
 
 # Returns networkx bus AccessNode graph of all dataset stops and routes with weights
 def get_dataset_bus_graph_networkx():
-    bus_graph = (D_get_bus_access_node_graph())  # From Dataset_GenerateBusAccessNodeGraph.py incororating XML data
+    bus_graph = (
+        D_get_bus_access_node_graph()
+    )  # From Dataset_GenerateBusAccessNodeGraph.py incororating XML data
     G = nx.DiGraph()
     labels = {}  # For adding custom labels to graph
 
