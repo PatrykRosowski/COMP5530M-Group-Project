@@ -6,12 +6,7 @@
 ### --- Imports --- ###
 
 
-from app.graph_testing.AccessNode import AccessNode
-# if __name__ == "__main__":
-#     from WalkingEdgeWeight import euclidian_distance
-#     from WalkingEdgeWeight import return_walking_edge_weight
-#     from BusEdgeWeight import get_weight_bus
-# else:
+from app.data.AccessNode import AccessNode
 from app.graph_testing.WalkingEdgeWeight import euclidian_distance
 from app.graph_testing.WalkingEdgeWeight import return_walking_edge_weight
 from app.graph_testing.BusEdgeWeight import get_weight_bus
@@ -257,9 +252,9 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict = {}):
             newNode.mode = nodeData[1:]  # also update mode used along this edge (including bus_route)
             newNode.edge = edge_weight
 
-            print(".",end='') # computation progress for debug
+            # print(".",end='') # computation progress for debug
 
-        print(f"{count},,",end='') # computation progress for debug
+        # print(f"{count},,",end='') # computation progress for debug
 
     return Exception("Failure, could not compute path from start to end."), float("inf")
 
