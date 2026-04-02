@@ -244,17 +244,17 @@ def return_walking_edge_weight(start_node, end_node):
     # Calculate straightline distance as a baseline maximum (under 500m)
     euc_dist = euclidian_distance(start_node, end_node)
 
-    # lat1, long1 = start_node.Latitude, start_node.Longitude
-    # lat2, long2 = end_node.Latitude, end_node.Longitude
+    lat1, long1 = start_node.Latitude, start_node.Longitude
+    lat2, long2 = end_node.Latitude, end_node.Longitude
 
     # If using Euclidian distance -
-    walk_dist, time = 0, 0
+    # walk_dist, time = 0, 0
 
     # If using OSM -
     # walk_dist, p, g = walking_route_osm(lat1, long1, lat2, long2) # path (p) and graph (g)
 
     # If using OSRM -
-    # walk_dist, time, p = walking_route_osrm(lat1, long1, lat2, long2) # distance (d) time (t) and path (p)
+    walk_dist, time, p = walking_route_osrm(lat1, long1, lat2, long2) # distance (d) time (t) and path (p)
 
     # If using Valhalla -
     # walk_dist, t, c = walking_route_valhalla(lat1, long1, lat2, long2) # time (t) and co-ords (c)
