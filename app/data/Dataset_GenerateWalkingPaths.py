@@ -10,7 +10,7 @@ import time
 
 PLOT_WALK = 0
 DEGREE_DIFF = 0.03
-CLOSEST_NODES = 18
+CLOSEST_NODES = 15
 
 
 ## -- Haversine Distance between 2 coordinates -- ##

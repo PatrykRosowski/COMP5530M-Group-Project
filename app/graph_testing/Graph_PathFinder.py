@@ -72,12 +72,12 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
     PunishmentMultiplyer = {
         "bus": 1,
         "tram": 1,
-        "walk": 20,
-        "change": 100,  # waiting-time penalty for a new bus
+        "walk": 2,
+        "change": 50,  # waiting-time penalty for a new bus
     }
-    Bus_Waiting_Cost = 20  # waiting-time for a bus
+    Bus_Waiting_Cost = 30  # waiting-time for a bus
 
-    Mode_Change_Punisher = 100
+    Mode_Change_Punisher = 150
 
     ## -- Combinations of changing transport modes -- ##
 
@@ -200,6 +200,8 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
     mode_used = {}
     edge_used = {}
     precomputed_nearby = {}
+    edge_weight_node = {}
+    mode_num = {}
     for node in graph:
 
         node.lat = node.get_Latitude()
@@ -214,8 +216,8 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
         mode_used[node] = None  # stored as (mode, bus_route) or (mode,)
         edge_used[node] = None
 
-        node.edge_weight = None
-        node.mode_num = 0
+        edge_weight_node[node] = None
+        mode_num[node] = 0
 
         # Precompute nearby lists
         precomputed_nearby[node] = node.Nearby
@@ -233,8 +235,8 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
     g[start] = 0
     f[start] = g[start] + h[start]
     parent[start] = None
-    start.mode_num = 0
-    start.edge_weight = 0
+    mode_num[start] = 0
+    edge_weight_node[start] = 0
 
     heapq.heappush(queue, (f[start], next(counter), start))
 
@@ -262,7 +264,7 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
 
             while backtracking_node is not None:
                 # (parent_node, edge_weight_travelled, mode_of_travel)
-                total_time += backtracking_node.edge_weight
+                total_time += edge_weight_node[backtracking_node]
                 path_array.insert(
                     0,
                     (
@@ -310,7 +312,7 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
                     nodeData[2],
                     None,
                     None,
-                    curNode.mode_num,  # mode  # route
+                    mode_num[curNode],  # mode  # route
                 )
             else:
                 prev_mode, prev_route = mode_used[curNode]
@@ -320,7 +322,7 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
                     nodeData[2],
                     prev_mode,
                     prev_route,
-                    curNode.mode_num,  # mode  # route
+                    mode_num[curNode],  # mode  # route
                 )
 
             heapq.heappush(queue, (f[newNode], next(counter), newNode))
@@ -340,22 +342,16 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
             mode_used[newNode] = nodeData[
                 1:
             ]  # also update mode used along this edge (including bus_route)
-            edge_used[newNode] = edge_weight
+            edge_weight_node[newNode] = edge_weight
 
             if mode_used[curNode] == None:
-                newNode.mode_num = 1
+                mode_num[newNode] = 1
             elif mode_used[curNode] == "walk":
-                newNode.mode_num = curNode.mode_num + 1
+                mode_num[newNode] = mode_num[curNode] + 1
             elif mode_used[curNode] == "bus" and edge_used[curNode] != edge_used[newNode]:
-                newNode.mode_num = curNode.mode_num + 1
+                mode_num[newNode] = mode_num[curNode] + 1
             else:
-                newNode.mode_num = curNode.mode_num
-
-            if show_progress == True:
-                print(".", end="")  # computation progress for debug
-
-        if show_progress == True:
-            print(f"{count},,", end="")  # computation progress for debug
+                mode_num[newNode] = mode_num[curNode]
 
     return (
         Exception("Failure, could not compute path from start to end."),

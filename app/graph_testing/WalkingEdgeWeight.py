@@ -11,9 +11,9 @@ from math import sin, cos, sqrt, atan2, radians  # for Haversine distance
 import time
 import pickle
 
-# import folium
-# import requests
-# import polyline
+import folium
+import requests
+import polyline
 
 AVG_WALKING_SPEED = 1.4  # metres per second
 
@@ -247,9 +247,10 @@ def return_walking_edge_weight(start_node, end_node):
 
     # Calculate straightline distance as a baseline maximum (under 500m)
     euc_dist = euclidian_distance(start_node, end_node)
+    return euc_dist * AVG_WALKING_SPEED
 
-    lat1, long1 = start_node.Latitude, start_node.Longitude
-    lat2, long2 = end_node.Latitude, end_node.Longitude
+    # lat1, long1 = start_node.Latitude, start_node.Longitude
+    # lat2, long2 = end_node.Latitude, end_node.Longitude
 
     # If using Euclidian distance -
     # walk_dist, time = 0, 0
@@ -258,17 +259,17 @@ def return_walking_edge_weight(start_node, end_node):
     # walk_dist, p, g = walking_route_osm(lat1, long1, lat2, long2) # path (p) and graph (g)
 
     # If using OSRM -
-    walk_dist, time, p = walking_route_osrm(
-        lat1, long1, lat2, long2
-    )  # distance (d) time (t) and path (p)
+    # walk_dist, time, p = walking_route_osrm(
+    # lat1, long1, lat2, long2
+    # )  # distance (d) time (t) and path (p)
 
     # If using Valhalla -
     # walk_dist, t, c = walking_route_valhalla(lat1, long1, lat2, long2) # time (t) and co-ords (c)
 
-    weight = time
-    if walk_dist < euc_dist:
-        # walking path is shorter than shortest (straightline) path - error
-        weight = euc_dist * AVG_WALKING_SPEED
+    # weight = time
+    # if walk_dist < euc_dist:
+    # walking path is shorter than shortest (straightline) path - error
+    # weight = euc_dist * AVG_WALKING_SPEED
 
     # Uncomment to plot -
 
@@ -277,7 +278,7 @@ def return_walking_edge_weight(start_node, end_node):
     # plot_route_osrm(p)
     # plot_route_val(c)
 
-    return weight
+    # return weight
 
 
 # graph = pickle.load(open("multimodal_graph.pkl", "rb"))
