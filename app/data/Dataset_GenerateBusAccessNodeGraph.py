@@ -16,7 +16,7 @@ def get_bus_access_node_graph(city):
     # Array of bus-stop codes
     busCodes = []
 
-    with open(f"app/data/Datasets/{city}/AllBusStopData.json", "r") as f:
+    with open(f"app/data_files/Datasets/{city}/AllBusStopData.json", "r") as f:
         fileData = json.load(f)
 
         for file in fileData:
@@ -36,7 +36,7 @@ def get_bus_access_node_graph(city):
 
     # List of consecutive routes :
     routesList = []
-    with open(f"app/data/Datasets/{city}/AllRoutesData.json", "r") as g:
+    with open(f"app/data_files/Datasets/{city}/AllRoutesData.json", "r") as g:
 
         fileData = json.load(g)
 
@@ -86,3 +86,4 @@ if __name__ == "__main__":
     sys.setrecursionlimit(100000)
     graph = get_bus_access_node_graph("Manchester")
     pickle.dump(graph, open("app/data_files/manchester_multimodal_graph.pkl", "wb"))
+    print("File succeccfully run!")

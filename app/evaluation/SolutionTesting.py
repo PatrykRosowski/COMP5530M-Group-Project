@@ -5,19 +5,34 @@ import time
 import sys
 import os
 import gmplot
+import shutil
+#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+start_time = time.time()
 from app.data.AccessNode import AccessNode
 from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
 from app.data.Dataset_GenerateWalkingPaths import add_walking_paths
-
-# from data.Dataset_MapBusAccessNodeGraph import plot_in_gmplot
+from app.data.Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 from app.utils.heatmap_controller import get_heatmap_pairs
-from app.graph_testing.Graph_PathFinder import Shortest_Path_Simulation  # , PrintCost()
+from app.graph_testing.Graph_PathFinder import Shortest_Path_Simulation #, PrintCost()
+end_time = time.time()
+print(f"\n\nImports successfully processed in time {end_time-start_time:.2f} seconds.\n")
 
 
 ## -- Functions -- ##
+
+
+def sec_to_hmsms(seconds):
+
+    # input : (int) seconds
+    # output : (str) hour-minute-second-milisecond
+ 
+    s, ms = divmod(seconds, 1)
+    s = int(s)
+    m, s = divmod(s, 60)
+    h, m = divmod(m, 60)
+    ms = ms*10
+    return f"{h}h {m}m {s}s {ms:.1f}ms"
 
 
 def add_heatmap_points_to_graph(graph, points):
@@ -56,12 +71,15 @@ def add_heatmap_points_to_graph(graph, points):
     return graph, ArrayOfAccessNodePairs
 
 
-def plot_solution(sol_array, name):
+def plot_eval_solution(sol_array, name, city):
 
-    # sol_array[i] = (parent_node, edge_weight_travelled, mode_of_travel)
-    colours = ["blue", "orange", "green", "red", "purple", "yellow", "pink", "white"]
-    used_routes = []
-    gmap = gmplot.GoogleMapPlotter(54.05, -1.42, 12)
+        # sol_array[i] = (parent_node, edge_weight_travelled, mode_of_travel)
+        colours = ["blue", "orange", "green", "red", "purple", "yellow", "pink", "white"]
+        used_routes = []
+        if city == "Harrogate":
+            gmap = gmplot.GoogleMapPlotter(54.05, -1.42, 12)
+        if city == "Manchester":
+            gmap = gmplot.GoogleMapPlotter(53.53, -2.26, 10)
 
     first = True  # Flag variable keeping track of whether on starting node
     i = 0  # Keep track of position in solution array
@@ -104,10 +122,15 @@ def plot_solution(sol_array, name):
 if __name__ == "__main__":
 
     # Number of (start, end) pairs
-    NUM_START_END_PAIRS = 500
+    NUM_START_END_PAIRS = 5
+
+    dir = 'app/evaluation/solutions'
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+    os.makedirs(dir)
+
 
     run_start = time.time()
-    print()
     print("===================================")
     print("Running solution testing script ...")
     print("===================================\n")
@@ -135,35 +158,37 @@ if __name__ == "__main__":
     end = time.time()
     print(f"Walking paths generated in time {end-start:.2f} seconds.\n")
 
+    # Displaying graph :
+    plot_in_gmplot(graph, "app/evaluation/solutions/graph_with_hm_points.html")
+    print("Full map of bus stops and heatmap points connected by bus routes and walking paths generated in app/evaluation/solutions.\n")
+
     start = time.time()
     solution_stats = {}  # { 1: (path, cost), 2: (path, cost), ... }
     time_arr = []
     edge_weight_dict = {}  # Stores computed edge weights (to speed calculations)
     index = 0
+    print("Computing journeys:")
     for pair in testing_points:
         stime = time.time()
         index += 1
-        solution_path, total_cost = Shortest_Path_Simulation(
-            graph, pair[0], pair[1], edge_weight_dict
-        )
-        solution_stats[index] = (solution_path, total_cost)
+        solution_path, total_weight, total_cost = Shortest_Path_Simulation(graph, pair[0], pair[1], edge_weight_dict, show_progress=False)
+        solution_stats[index] = (solution_path, total_weight, total_cost)
+        print(f"{index}.. ", end='')
         etime = time.time()
         time_arr.append(f"{etime-stime:.2f}")
     end = time.time()
-    print(
-        f"\nTesting complete (for {NUM_START_END_PAIRS} journeys) in time {end-start:.2f} seconds."
-    )
+    print(f"\nTesting complete (for {NUM_START_END_PAIRS} journeys) in time {end-start:.2f} seconds.\n")
     print(f"Timings for each file: {time_arr}\n")
 
     print("\nSolutions:")
-    for i in solution_stats:
-        print(solution_stats[i][1], ", ", end="")
-
+    count = 0
     num_of_inf = 0
     for i in solution_stats:
-        if solution_stats[i][1] == float("inf"):
+        count+=1
+        print(f"File {count}: weight = {solution_stats[i][1]:.2f}, path-cost = {solution_stats[i][2]:.4f}")
+        if solution_stats[i][1] == float('inf'):
             num_of_inf += 1
-    print(f"\n\nNumber of failed paths = {num_of_inf}")
+    print(f"\nNumber of failed journeys = {num_of_inf}/{NUM_START_END_PAIRS}")
 
     run_end = time.time()
     print("\n\n\n====================================================")
@@ -172,12 +197,13 @@ if __name__ == "__main__":
 
     count = 0
     for path in solution_stats:
-        count += 1
+        count+=1
         try:
-            plot_solution(
-                solution_stats[path][0], f"app/evaluation/solutions/file_num_{count}.html"
-            )
-        except Exception as e:
-            pass
+            plot_eval_solution(solution_stats[path][0], f"app/evaluation/solutions/file_num_{count}.html", "Manchester")
+        except:
+            print(f"Exception occured, couldn't generate for file {count}")
 
     ## -- End of script -- ##
+
+end_time = time.time()
+print(f"\nEntire script run in total time {sec_to_hmsms(end_time - start_time)}\n\n")
