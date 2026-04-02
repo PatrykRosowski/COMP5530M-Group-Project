@@ -3,10 +3,13 @@ import csv
 import pandas as pd
 import gmplot
 import random
+import json
+from pathlib import Path
 
 # Constants
 HEATMAP_DATA = "app/utils/HeatmapData/ManchesterPopulationDensity.csv"
 LSOA_LOOKUP = "app/utils/HeatmapData/LSOA_Lookup.csv"
+POINT_PAIRS_FILE = "app/utils/HeatmapData/PointPairs.json"
 
 
 # Transforms heatmap data CSV to tabular data
@@ -39,6 +42,13 @@ def transform_heatmap_data():
 
 # Return a k-random amount of pairs, with higher densities more likely to be produced
 def get_heatmap_pairs(k):
+
+    # If file exists, return those point pairs instead.
+    if Path(POINT_PAIRS_FILE).exists():
+        with open(POINT_PAIRS_FILE, "r") as file:
+            data = json.load(file)
+            if len(data) >= k:
+                return data[:k]  # Return only k pieces of data
 
     pointPairs = []
     # Fetch the table with heatmap values
@@ -76,6 +86,9 @@ def mapped_example():
     gmap = gmplot.GoogleMapPlotter(53.9921, 1.5418, 13)
 
     pointPairs = get_heatmap_pairs(1000)
+
+    with open(POINT_PAIRS_FILE, "w") as file:
+        json.dump(pointPairs, file, indent=1)
 
     # Plotting points
     for pointPair in pointPairs:
