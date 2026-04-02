@@ -37,7 +37,7 @@ def coord_to_km(lat1, long1, lat2, long2):
 
 ## -- Function to generate walking paths given bus graph -- ##
 
-WALKING_DIST_RADIUS = 500  # metres
+WALKING_DIST_RADIUS = 1500  # metres
 
 def add_walking_paths(graph):
 
