@@ -1,9 +1,11 @@
 ### --- Imports --- ###
 
-import osmnx as ox
-ox.settings.use_cache = False
+# import osmnx as ox
+
+# ox.settings.use_cache = False
 import networkx as nx
-import taxicab as tc
+
+# import taxicab as tc
 
 from math import sin, cos, sqrt, atan2, radians  # for Haversine distance
 import time
@@ -13,12 +15,10 @@ import folium
 import requests
 import polyline
 
-AVG_WALKING_SPEED = 1.4 # metres per second
-
+AVG_WALKING_SPEED = 1.4  # metres per second
 
 
 ### --- Distance Retrieving Functions --- ###
-
 
 
 ## -- Boundary for osmnx.graph_from_bbox [NOT USED] -- ##
@@ -47,7 +47,9 @@ def get_coord_bounds(graph):
     padding = 0.01
     return north + padding, south - padding, east + padding, west - padding
 
+
 ## -- Haversine Distance between 2 coordinates -- ##
+
 
 def coord_to_km(lat1, long1, lat2, long2):
 
@@ -64,21 +66,20 @@ def coord_to_km(lat1, long1, lat2, long2):
     a = sin(lat_diff / 2) ** 2 + cos(La1) * cos(La2) * sin(lon_diff / 2) ** 2
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
-    dist = R * c * 1000 # converting from km to m
+    dist = R * c * 1000  # converting from km to m
     return dist
 
+
 # Inputs 2 nodes, returns Euclidian distance :
+
 
 def euclidian_distance(node, target):
 
     # Inputs: AccessNode vertices
     # Outputs: distance between their coordinates in km
-
-    dist = coord_to_km(
-        node.get_Latitude(), node.get_Longitude(), target.get_Latitude(), target.get_Longitude()
-    )
-    return dist
-
+    dx = (node.lon - target.lon) * 111320 * cos(radians((node.lat + target.lat) / 2))
+    dy = (node.lat - target.lat) * 110540
+    return sqrt(dx * dx + dy * dy)  # meters
 
 
 ##
@@ -86,10 +87,11 @@ def euclidian_distance(node, target):
 ##
 ## -- Walking Distance (via OpenStreetMaps) between 2 coordinates -- ##
 
+
 def walking_route_osm(lat1, long1, lat2, long2):
 
     # Trying to use taxicab with OpenStreetMap:
-    '''
+    """
     G = ox.graph_from_point((lat1, long1), dist=700, network_type="walk")
 
     start = (lat1, long1)
@@ -102,7 +104,7 @@ def walking_route_osm(lat1, long1, lat2, long2):
     #tc.plot.plot_graph_route(G, route)
 
     return route.length, route.nodes, G  # meters
-    #'''
+    #"""
 
     # Using in built functions and 'nearest_nodes' for node location:
     #'''
@@ -120,7 +122,9 @@ def walking_route_osm(lat1, long1, lat2, long2):
     return dist, path, G
     #'''
 
+
 # Plotting solution path :
+
 
 def plot_route_osm(G, path):
 
@@ -138,7 +142,6 @@ def plot_route_osm(G, path):
     m.save("app/graph_testing/route_map.html")
 
     return m
-
 
 
 ##
@@ -160,13 +163,15 @@ def walking_route_osrm(lat1, lon1, lat2, lon2):
 
     route = data["routes"][0]
 
-    distance = route["distance"]      # meters
-    duration = route["duration"]      # seconds
+    distance = route["distance"]  # meters
+    duration = route["duration"]  # seconds
     path = route["geometry"]["coordinates"]
 
     return distance, duration, path
 
+
 # Plotting solution path:
+
 
 def plot_route_osrm(path):
 
@@ -184,11 +189,11 @@ def plot_route_osrm(path):
     return m
 
 
-
 ##
 ## Option 3 - Use Valhalla routing from public server
 ##
 ## --  Valhalla mapping -- ##
+
 
 def walking_route_valhalla(lat1, lon1, lat2, lon2):
 
@@ -196,12 +201,9 @@ def walking_route_valhalla(lat1, lon1, lat2, lon2):
     url = "https://valhalla1.openstreetmap.de/route"
 
     payload = {
-        "locations": [
-            {"lat": lat1, "lon": lon1},
-            {"lat": lat2, "lon": lon2}
-        ],
+        "locations": [{"lat": lat1, "lon": lon1}, {"lat": lat2, "lon": lon2}],
         "costing": "pedestrian",
-        "directions_options": {"units": "meters"}
+        "directions_options": {"units": "meters"},
     }
 
     r = requests.post(url, json=payload)
@@ -209,16 +211,18 @@ def walking_route_valhalla(lat1, lon1, lat2, lon2):
 
     route = data["trip"]["legs"][0]
 
-    distance = route["summary"]["length"] * 1000   # km → meters
-    trav_time = route["summary"]["time"]               # seconds
-    shape = route["shape"]                        # encoded polyline
+    distance = route["summary"]["length"] * 1000  # km → meters
+    trav_time = route["summary"]["time"]  # seconds
+    shape = route["shape"]  # encoded polyline
 
     coords = polyline.decode(shape, precision=6)
-    
-    #print(f"{distance},{type(distance)} | {time},{type(time)} | {coords},{type(coords)}")
+
+    # print(f"{distance},{type(distance)} | {time},{type(time)} | {coords},{type(coords)}")
     return distance, trav_time, coords
 
+
 # Plotting solution path
+
 
 def plot_route_val(coords):
 
@@ -233,19 +237,20 @@ def plot_route_val(coords):
     return m
 
 
-
 ### --- Main --- ###
 
 
 ## -- Edge weight returning function -- ##
 
+
 def return_walking_edge_weight(start_node, end_node):
 
     # Calculate straightline distance as a baseline maximum (under 500m)
     euc_dist = euclidian_distance(start_node, end_node)
+    return euc_dist * AVG_WALKING_SPEED
 
-    lat1, long1 = start_node.Latitude, start_node.Longitude
-    lat2, long2 = end_node.Latitude, end_node.Longitude
+    # lat1, long1 = start_node.Latitude, start_node.Longitude
+    # lat2, long2 = end_node.Latitude, end_node.Longitude
 
     # If using Euclidian distance -
     # walk_dist, time = 0, 0
@@ -254,43 +259,43 @@ def return_walking_edge_weight(start_node, end_node):
     # walk_dist, p, g = walking_route_osm(lat1, long1, lat2, long2) # path (p) and graph (g)
 
     # If using OSRM -
-    walk_dist, time, p = walking_route_osrm(lat1, long1, lat2, long2) # distance (d) time (t) and path (p)
+    # walk_dist, time, p = walking_route_osrm(
+    # lat1, long1, lat2, long2
+    # )  # distance (d) time (t) and path (p)
 
     # If using Valhalla -
     # walk_dist, t, c = walking_route_valhalla(lat1, long1, lat2, long2) # time (t) and co-ords (c)
 
-    weight = time
-    if walk_dist < euc_dist: 
-        # walking path is shorter than shortest (straightline) path - error
-        weight = euc_dist * AVG_WALKING_SPEED
-
+    # weight = time
+    # if walk_dist < euc_dist:
+    # walking path is shorter than shortest (straightline) path - error
+    # weight = euc_dist * AVG_WALKING_SPEED
 
     # Uncomment to plot -
 
-    #plot_route_osm(g, p)
-    #ox.plot_graph_route(G, path) # use for osm plotting
-    #plot_route_osrm(p)
-    #plot_route_val(c)
+    # plot_route_osm(g, p)
+    # ox.plot_graph_route(G, path) # use for osm plotting
+    # plot_route_osrm(p)
+    # plot_route_val(c)
 
-    return weight
-
+    # return weight
 
 
 # graph = pickle.load(open("multimodal_graph.pkl", "rb"))
 
-#start = time.time()
+# start = time.time()
 
-#lat1, lon1 = graph[8].Latitude, graph[8].Longitude
-#lat2, lon2 = graph[9].Latitude, graph[9].Longitude
-#distance, time_taken, route = walking_route_valhalla(lat1, lon1, 53.974988, -1.550100) #lat2, lon2)
-#dist, path, G = get_walking_path_distance(lat1, lon1, lat2, lon2)
+# lat1, lon1 = graph[8].Latitude, graph[8].Longitude
+# lat2, lon2 = graph[9].Latitude, graph[9].Longitude
+# distance, time_taken, route = walking_route_valhalla(lat1, lon1, 53.974988, -1.550100) #lat2, lon2)
+# dist, path, G = get_walking_path_distance(lat1, lon1, lat2, lon2)
 
-#end = time.time()
-#print(f"Graph generated succesfully in time {end-start:.3f}")
+# end = time.time()
+# print(f"Graph generated succesfully in time {end-start:.3f}")
 
-#print("Distance:", distance, "meters")
-#print("Time:", time_taken, "seconds")
-#print("Route points:", route)
-#print(graph[100].CommonName, ",", graph[101].CommonName) # verify nodes for visual debug
+# print("Distance:", distance, "meters")
+# print("Time:", time_taken, "seconds")
+# print("Route points:", route)
+# print(graph[100].CommonName, ",", graph[101].CommonName) # verify nodes for visual debug
 
-#print("Finished")
+# print("Finished")

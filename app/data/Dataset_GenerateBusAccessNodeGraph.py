@@ -11,7 +11,6 @@ import pickle
 
 def get_bus_access_node_graph(city):
 
-
     ## -- Bus Stops -- ##
 
     # Array of bus-stop codes
@@ -33,7 +32,6 @@ def get_bus_access_node_graph(city):
     # Extracting AccessNode data from ATCO Codes
     busData = get_specific_stop_data(busCodes)
 
-
     ## -- Bus Routes -- ##
 
     # List of consecutive routes :
@@ -46,7 +44,6 @@ def get_bus_access_node_graph(city):
             routesList.append(file)
 
             # break # Uncomment to only view 1st file bus routes
-
 
     ## -- Populating AccessNode Graph -- ##
 
@@ -83,9 +80,10 @@ def get_bus_access_node_graph(city):
 
 ### Main ###
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     sys.setrecursionlimit(100000)
     graph = get_bus_access_node_graph("Manchester")
-    pickle.dump(graph, open('app/data_files/manchester_multimodal_graph.pkl', 'wb'))
+    pickle.dump(graph, open("app/data_files/manchester_multimodal_graph.pkl", "wb"))
     print("File succeccfully run!")
