@@ -1,11 +1,10 @@
 import React from 'react'
-import MapComponent from './MapComponent'
-import RouteDisplay from './RouteDisplay'
+import BusNetworkMap from './BusNetworkMap.jsx'
 import './App.css'
 
 function App() {
   return (
-    <RouteDisplay />
+    <BusNetworkMap />
   )
 }
 
