@@ -1,44 +1,18 @@
-<<<<<<< HEAD
 ### Imports ###
-
-
-from app.data.AccessNode import AccessNode
-from app.data.GetAccessNodes import get_specific_stop_data
-=======
-### --- Imports --- ###
->>>>>>> main
-
 from app.data.AccessNode import AccessNode
 from app.data.GetAccessNodes import get_specific_stop_data
 import json
-<<<<<<< HEAD
-import os
-
-### File Extraction ###
-=======
 import pickle
 
 
 ### --- File Extraction --- ###
->>>>>>> main
-
 
 def get_bus_access_node_graph(city):
 
     ## -- Bus Stops -- ##
 
-<<<<<<< HEAD
-base_dir = os.path.dirname(os.path.abspath(__file__))
-
-with open(os.path.join(base_dir, "AllBusStopData.json"), "r") as f:
-    fileData = json.load(f)
-    
-    for file in fileData:
-        for data in file:
-=======
     # Array of bus-stop codes
     busCodes = []
->>>>>>> main
 
     with open(f"app/data_files/Datasets/{city}/AllBusStopData.json", "r") as f:
         fileData = json.load(f)
@@ -56,17 +30,7 @@ with open(os.path.join(base_dir, "AllBusStopData.json"), "r") as f:
     # Extracting AccessNode data from ATCO Codes
     busData = get_specific_stop_data(busCodes)
 
-<<<<<<< HEAD
-# List of consecuti
-routesList = []
-with open(os.path.join(base_dir, "AllRoutesData.json"), "r") as g:
-    fileData = json.load(g)
-    
-    for file in fileData:
-        routesList.append(file)
-=======
     ## -- Bus Routes -- ##
->>>>>>> main
 
     # List of consecutive routes :
     routesList = []
