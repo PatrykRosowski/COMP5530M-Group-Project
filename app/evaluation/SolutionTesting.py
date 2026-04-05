@@ -8,37 +8,27 @@ import gmplot
 import shutil
 from gmplot.color import _HTML_COLOR_CODES as COLOURS
 
-# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 start_time = time.time()
+
 from app.data.AccessNode import AccessNode
 from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
 from app.data.Dataset_GenerateWalkingPaths import add_walking_paths
 from app.data.Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 from app.utils.heatmap_controller import get_heatmap_pairs
-from app.graph_testing.Graph_PathFinder import Shortest_Path_Simulation  # , PrintCost()
+from app.graph_testing.Graph_PathFinder import Shortest_Path_Simulation
+from app.evaluation.SolutionEvaluation import print_all_statistics
+from app.evaluation.SolutionEvaluation import sec_to_hmsms
 
 end_time = time.time()
 print(f"\n\nImports successfully processed in time {end_time-start_time:.2f} seconds.\n")
 
 
 ## -- Functions -- ##
+
+
 def my_print(text):
     sys.stdout.write(str(text))
     sys.stdout.flush()
-
-
-def sec_to_hmsms(seconds):
-
-    # input : (int) seconds
-    # output : (str) hour-minute-second-milisecond
-
-    s, ms = divmod(seconds, 1)
-    s = int(s)
-    m, s = divmod(s, 60)
-    h, m = divmod(m, 60)
-    ms = ms * 10
-    return f"{h}h {m}m {s}s {ms:.1f}ms"
 
 
 def add_heatmap_points_to_graph(graph, points):
@@ -80,7 +70,12 @@ def add_heatmap_points_to_graph(graph, points):
 def plot_eval_solution(sol_array, name, city):
 
     # sol_array[i] = (parent_node, edge_weight_travelled, mode_of_travel)
-    colours = list(COLOURS.keys())
+    full_colours = list(COLOURS.keys())
+    colours = ["blue", "orange", "green", "red", "purple", "yellow", "pink", "brown", "white"] #, "cyan", "lime", "navy", "gold", "maroon"]
+    for col in full_colours:
+        if col not in colours:
+            colours.append(col)
+    
     used_routes = []
     if city == "Harrogate":
         gmap = gmplot.GoogleMapPlotter(54.05, -1.42, 12)
@@ -127,8 +122,11 @@ def plot_eval_solution(sol_array, name, city):
 
 if __name__ == "__main__":
 
+
+    ## -- Initialisation -- ##
+
     # Number of (start, end) pairs
-    NUM_START_END_PAIRS = 500
+    NUM_START_END_PAIRS = 15
 
     dir = "app/evaluation/solutions"
     if os.path.exists(dir):
@@ -140,11 +138,21 @@ if __name__ == "__main__":
     print("Running solution testing script ...")
     print("===================================\n")
 
+
+    ## -- Obtaining Bus Graphs -- ##
+
+    # Existing bus graph -
     start = time.time()
     graph = get_bus_access_node_graph("Manchester")  # Obtains all bus vertices
     # graph = pickle.load(open("app/data_files/manchester_multimodal_graph.pkl", "rb"))
     end = time.time()
     print(f"Bus graph generated in time {end-start:.2f} seconds.\n")
+
+    # Newly proposed bus graph -
+    # Space for getting the newly proposed bus graph
+
+
+    ## -- Obtaining Heatmap Points -- ##
 
     start = time.time()
     heatmap_points = get_heatmap_pairs(NUM_START_END_PAIRS)  # number of (start, end) pairs
@@ -158,6 +166,9 @@ if __name__ == "__main__":
     end = time.time()
     print(f"Heatmap points added in time {end-start:.2f} seconds.\n")
 
+
+    ## -- Adding Walking Paths to all Nodes -- ##
+
     start = time.time()
     graph = add_walking_paths(graph)  # Generates walking edges using Euclidian distance
     end = time.time()
@@ -169,8 +180,14 @@ if __name__ == "__main__":
         "Full map of bus stops and heatmap points connected by bus routes and walking paths generated in app/evaluation/solutions.\n"
     )
 
+
+    ## -- Running (custom) A* and Storing Output Data -- ##
+
     start = time.time()
-    solution_stats = {}  # { 1: (path, cost), 2: (path, cost), ... }
+
+    # Dictionary that stores output of running A*
+    solution_stats = {}  # { 1: (path, weight, cost), 2: (path, weight, cost), ... }
+
     time_arr = []
     edge_weight_dict = {}  # Stores computed edge weights (to speed calculations)
     index = 0
@@ -193,6 +210,9 @@ if __name__ == "__main__":
     )
     print(f"Timings for each file: {time_arr}\n")
 
+
+    ## -- Displaying Solution Outputs -- ##
+
     print("\nSolutions:")
     count = 0
     num_of_inf = 0
@@ -210,6 +230,9 @@ if __name__ == "__main__":
     print(f"Script successfully executed in time: {run_end-run_start:.2f} seconds.")
     print("====================================================\n")
 
+
+    ## -- Plotting Solutions in app/evaluation/solutions -- ##
+
     count = 0
     for path in solution_stats:
         count += 1
@@ -222,7 +245,19 @@ if __name__ == "__main__":
         except:
             print(f"Exception occured, couldn't generate for file {count}")
 
+
+    ## -- Outputting Solution Statistics -- ##
+
+    filtered_solution_stats = {}
+    for i in solution_stats:
+        if solution_stats[i][1] != float('inf'):
+            filtered_solution_stats[i] = solution_stats[i] #{i: solution_stats[i] for i in solution_stats.keys() and solution_stats[i][1] != float('inf')}
+    print_all_statistics(filtered_solution_stats, "'Existing Bus Network'")
+    # Space for printing stats of proposed bus network
+
     ## -- End of script -- ##
 
+
+# Runtime of entire script
 end_time = time.time()
 print(f"\nEntire script run in total time {sec_to_hmsms(end_time - start_time)}\n\n")
