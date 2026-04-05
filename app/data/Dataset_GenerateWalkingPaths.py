@@ -37,7 +37,7 @@ def coord_to_km(lat1, long1, lat2, long2):
 
 ## -- Function to generate walking paths given bus graph -- ##
 
-WALKING_DIST_RADIUS = 5000  # metres
+WALKING_DIST_RADIUS = 1500  # metres
 
 
 def add_walking_paths(graph):
@@ -71,7 +71,7 @@ def add_walking_paths(graph):
         walkCandidates.sort(key=lambda x: x[0])
 
         # Keep only CLOSEST_NODES walking neighbours
-        walkCandidates = walkCandidates[:CLOSEST_NODES]
+        # walkCandidates = walkCandidates[:CLOSEST_NODES]
 
         # Adding bi-directional walking candidates
         for dist, compNode in walkCandidates:

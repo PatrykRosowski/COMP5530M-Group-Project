@@ -1,6 +1,6 @@
 ### --- Imports --- ###
 
-# import osmnx as ox
+import osmnx as ox
 
 # ox.settings.use_cache = False
 import networkx as nx
