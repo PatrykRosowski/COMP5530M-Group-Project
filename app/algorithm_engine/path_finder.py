@@ -1,32 +1,28 @@
 import networkx as nx
 from itertools import islice
+import math
 
 
-def shortest_distance_to_path(G: nx.DiGraph, node: nx.nodes, path_nodes: list[str]) -> float:
+def shortest_distance_to_path(G: nx.DiGraph, path_nodes: list[str]) -> float:
     """
     Calculates the shortest travel time from a specific node to any node within a given path.
 
     Args:
         G (nx.DiGraph): The network graph.
-        node (nx.nodes): The starting node object.
         path_nodes (list[str]): A list of node identifiers constituting the target path.
 
     Returns:
-        float: The minimum travel time from the start node to the closest node in the path_nodes list.
-               Returns infinity if no path exists.
+        dict: A dictionary mapping each node in the graph to the minimum distance of the closest node in the path.
     """
-    min_distance = float("inf")
-    for p in path_nodes:
-        try:
-            dist = nx.shortest_path_length(
-                G, node, p, weight="travel_time"
-            )  # default to djikstra with travel time as weight
-            if dist < min_distance:
-                min_distance = dist
-        except nx.NetworkXNoPath:
-            continue
+    # Using networkx more improved function for finding minimum distance
+    try:
 
-    return min_distance
+        distance, _ = nx.multi_source_dijkstra(
+            G.reverse(copy=False), path_nodes, weight="travel_time"
+        )
+        return distance
+    except nx.NetworkXNoPath:
+        return float("inf")
 
 
 def compute_least_eccentric_path(
@@ -60,11 +56,9 @@ def compute_least_eccentric_path(
 
     for path in k_paths:
         paths_evaluated += 1
-        eccentricity = 0
-        for node in list(G.nodes):
-            distance = shortest_distance_to_path(G, node, path)
-            if distance > eccentricity:
-                eccentricity = distance
+        distances = shortest_distance_to_path(G, path)
+        # Iterate dictionary to extract maximum eccentricity
+        eccentricity = max(distances.values())
         if eccentricity < min_eccentricity:
             min_eccentricity = eccentricity
             best_path = path

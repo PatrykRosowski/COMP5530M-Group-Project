@@ -1,11 +1,16 @@
 import naptan
 
-AREA_CODE = "320"  # North Yorkshire post code
-AREA_CODE_2 = "450"  # West Yorkshire post code
+# Harrogate :
+# AREA_CODES = ["320" , "450"]    # North Yorkshire (320) West Yorkshire (450) post code
+
+# Manchester :
+AREA_CODES = ["180", "069", "450", "060", "100", "280"]  # Manchester post code
+
+
 BUS_STOP_TYPE = "BCT"
 COLUMNS = ["ATCOCode", "CommonName", "Street", "Longitude", "Latitude", "StopType"]
 
-df_west_york_stops = naptan.get_area_stops([AREA_CODE, AREA_CODE_2])
+df_west_york_stops = naptan.get_area_stops(AREA_CODES)
 df_west_york_stops_simple = df_west_york_stops.filter(COLUMNS, axis=1)
 
 

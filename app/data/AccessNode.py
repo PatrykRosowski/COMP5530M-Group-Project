@@ -5,7 +5,7 @@ class AccessNode:
         self.Street = data_row["Street"]
         self.Longitude = data_row["Longitude"]
         self.Latitude = data_row["Latitude"]
-        self.Nearby = []
+        self.Nearby = []  # Format: (AccessNode, transport_mode, route_id)
 
     def get_ATCOCode(self):
         return self.ATCOCode

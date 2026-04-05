@@ -1,20 +1,33 @@
+<<<<<<< HEAD
 ### Imports ###
 
 
 from app.data.AccessNode import AccessNode
 from app.data.GetAccessNodes import get_specific_stop_data
+=======
+### --- Imports --- ###
+>>>>>>> main
 
+from app.data.AccessNode import AccessNode
+from app.data.GetAccessNodes import get_specific_stop_data
 import json
+<<<<<<< HEAD
 import os
 
 ### File Extraction ###
+=======
+import pickle
 
 
-## Bus Stops ##
+### --- File Extraction --- ###
+>>>>>>> main
 
-# List of bus-stop codes :
-busCodes = []
 
+def get_bus_access_node_graph(city):
+
+    ## -- Bus Stops -- ##
+
+<<<<<<< HEAD
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 with open(os.path.join(base_dir, "AllBusStopData.json"), "r") as f:
@@ -22,20 +35,28 @@ with open(os.path.join(base_dir, "AllBusStopData.json"), "r") as f:
     
     for file in fileData:
         for data in file:
+=======
+    # Array of bus-stop codes
+    busCodes = []
+>>>>>>> main
 
-            # Extracting common names from files
-            stopName = data["StopPointRef"]
-            if stopName not in busCodes:
-                busCodes.append(stopName)
+    with open(f"app/data_files/Datasets/{city}/AllBusStopData.json", "r") as f:
+        fileData = json.load(f)
 
-        #break # Uncomment to only view 1st file bus stops
+        for file in fileData:
+            for data in file:
 
-# Extracting AccessNode data from ATCO Codes
-busData = get_specific_stop_data(busCodes)
+                # Extracting common names from files
+                stopName = data["StopPointRef"]
+                if stopName not in busCodes:
+                    busCodes.append(stopName)
 
+            # break # Uncomment to only view 1st file bus stops
 
-## Bus Routes ##
+    # Extracting AccessNode data from ATCO Codes
+    busData = get_specific_stop_data(busCodes)
 
+<<<<<<< HEAD
 # List of consecuti
 routesList = []
 with open(os.path.join(base_dir, "AllRoutesData.json"), "r") as g:
@@ -43,32 +64,38 @@ with open(os.path.join(base_dir, "AllRoutesData.json"), "r") as g:
     
     for file in fileData:
         routesList.append(file)
+=======
+    ## -- Bus Routes -- ##
+>>>>>>> main
 
-        #break # Uncomment to only view 1st file bus routes
+    # List of consecutive routes :
+    routesList = []
+    with open(f"app/data_files/Datasets/{city}/AllRoutesData.json", "r") as g:
 
+        fileData = json.load(g)
 
+        for file in fileData:
+            routesList.append(file)
 
-### Populating AccessNode Graph ###
+            # break # Uncomment to only view 1st file bus routes
 
-
-# Note: vis is inputted in the map generation script        
-def get_bus_access_node_graph(vis = 0):
+    ## -- Populating AccessNode Graph -- ##
 
     df_data = busData  # pandas dataframe of AccessNode data
 
     # Array of all AccessNode objects :
     AccessNodeGraph = [AccessNode(data_row) for index, data_row in df_data.iterrows()]
-    
+
     # Stores {ATCO_Code: AccessNode_Object} :
-    CodeToNode = { AccessNode.get_ATCOCode(ANode):ANode for ANode in AccessNodeGraph }
+    CodeToNode = {AccessNode.get_ATCOCode(ANode): ANode for ANode in AccessNodeGraph}
     # This is because AccessNode.addNearbyStop inputs AccessNode objects
 
     # Generating arrays of all nearby stops for each stop
-    cur_file = 0 # stores unique bus route as integer
-    
+    bus_route_num = 0  # stores unique bus route as integer
+
     for bus_route in routesList:
-        cur_file += 1
-        
+        bus_route_num += 1
+
         for journey in bus_route:
 
             # Consecutive bus stops (as ATCO codes)
@@ -78,17 +105,19 @@ def get_bus_access_node_graph(vis = 0):
             # ATCO Code -> AccessNode object
             curNode = CodeToNode[start]
 
-            # vis=1 makes multicolour edges (encodes colours to integers (cur_file))
-            if vis == 1:
-                AccessNode.addNearbyStop(curNode, (CodeToNode[end], cur_file))
-            else:
-                AccessNode.addNearbyStop(curNode,CodeToNode[end])
-    
+            AccessNode.addNearbyStop(
+                curNode, (CodeToNode[end], "bus", bus_route_num)
+            )  # (Node, mode, route)
 
     return AccessNodeGraph
 
 
-
 ### Main ###
 
-# get_bus_access_node_graph()
+if __name__ == "__main__":
+    import sys
+
+    sys.setrecursionlimit(100000)
+    graph = get_bus_access_node_graph("Manchester")
+    pickle.dump(graph, open("app/data_files/manchester_multimodal_graph.pkl", "wb"))
+    print("File succeccfully run!")
