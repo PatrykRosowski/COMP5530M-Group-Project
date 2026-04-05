@@ -7,7 +7,7 @@
 
 
 from app.data.AccessNode import AccessNode
-from app.graph_testing.WalkingEdgeWeight import euclidian_distance
+from app.graph_testing.WalkingEdgeWeight import coord_to_km as euclidian_distance
 from app.graph_testing.WalkingEdgeWeight import return_walking_edge_weight
 from app.graph_testing.BusEdgeWeight import get_weight_bus
 from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
@@ -20,17 +20,9 @@ import random
 import gmplot
 import time
 import networkx as nx
-import heapq
-import itertools
-from functools import lru_cache
 
 # Constant that leads to bus graph graph ml file
 BUS_GRAPH = "bus_graph.graphml"
-BUS_NETWORK = nx.read_graphml(BUS_GRAPH)
-
-# Cache
-walking_weight_cache = {}
-bus_weight_cache = {}
 
 ### --- Functions --- ###
 
@@ -42,18 +34,6 @@ def generate_random_endstops(AccessNode_graph):
 
     nodes_list = random.sample(AccessNode_graph, 2)
     return nodes_list
-
-
-@lru_cache(maxsize=None)
-def cached_path_cost(edge_weight, cur_mode, cur_route, prev_mode, prev_route, node_mode_num):
-    # Reconstruct nodeData (had to be deconstructed as it's not hashable)
-    nodeData = (None, cur_mode, cur_route)
-
-    if prev_mode is None:
-        return path_cost(edge_weight, nodeData, None, node_mode_num)
-    else:
-        prev_mode_tuple = (prev_mode, prev_route)
-        return path_cost(edge_weight, nodeData, prev_mode_tuple, node_mode_num)
 
 
 Bus_Waiting_Cost = 20
@@ -76,15 +56,16 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
         "bus": 1,
         "tram": 1,
         "walk": 30,
-        "change": 50,  # waiting-time penalty for a new bus
+        "change": 100,  # waiting-time penalty for a new bus
     }
-    Bus_Waiting_Cost = 30  # waiting-time for a bus
+    Bus_Waiting_Cost = 20  # waiting-time for a bus
 
-    Mode_Change_Punisher = 1000
+    Mode_Change_Punisher = 100
 
     ## -- Combinations of changing transport modes -- ##
 
-    edge_weight = edge_weight * ( Mode_Change_Punisher ** node_mode_num )  # Exponential cost for new modes
+
+    edge_weight = edge_weight * (Mode_Change_Punisher ** node_mode_num) # Exponential cost for new modes
 
     if prev_mode == None:  # First choice from starting node
 
@@ -132,8 +113,7 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
     if prev_mode[0] == "walk" and cur_mode[0] == "walk":
 
         # Restrict passengers from consecutively walking (over 500m)
-        # return float("inf")
-        return edge_weight * PunishmentMultiplyer["walk"]
+        return float("inf")
 
     ## -- End of Function -- ##
 
@@ -141,28 +121,19 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
 def get_weight(G, start_node, end_node, mode):
 
     if mode == "walk":
-        key = start_node, end_node
-
-        if key not in walking_weight_cache:
-            weight = return_walking_edge_weight(start_node, end_node)
-            walking_weight_cache[key] = weight
-            walking_weight_cache[(end_node, start_node)] = weight
-        else:
-            weight = walking_weight_cache[key]
-
+        weight = return_walking_edge_weight(start_node, end_node)
+        # weight = 1
+        # print(f"walking weight = {weight}")
     elif mode == "bus":
-        key = (start_node, end_node)
-
-        if key not in bus_weight_cache:
-            weight = get_weight_bus(G, start_node, end_node)
-            bus_weight_cache[key] = weight
-        else:
-            weight = bus_weight_cache[key]
-
+        weight = get_weight_bus(G, start_node, end_node)
+        # weight = 1
+        # print(weight)
+        # print(f"bus weight = {weight}")
     else:
         raise ValueError(f"Unknown mode: '{mode}', {type(mode)}")
 
     return weight
+
 
 
 ### --- Shortest-Path Simulation (A-star Search) --- ###
@@ -173,90 +144,69 @@ def get_weight(G, start_node, end_node, mode):
 
 class AStarNode:
     def __init__(self):
-        self.node = None  # AccessNode in reference
-        self.g = float("inf")  # Actual cost from start
-        self.h = 0  # Estimated cost (from heuristic)
-        self.f = float("inf")  # Total estimated cost
-        self.parent = None  # For back-tracking
-        self.edge_weight = None  # Storing edge when back-tracking
-        self.mode = None  # For tracking the mode of transport
-        self.mode_num = 0  # For tracking how many busses/walks have been taken
+        self.node = None        # AccessNode in reference
+        self.g = float("inf")   # Actual cost from start
+        self.h = 0              # Estimated cost (from heuristic)
+        self.f = float("inf")   # Total estimated cost
+        self.parent = None      # For back-tracking
+        self.edge_weight = None # Storing edge when back-tracking
+        self.mode = None        # For tracking the mode of transport
+        self.mode_num = 0       # For tracking how many busses/walks have been taken
 
 
-def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progress=False):
+def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict = {}, show_progress = False):
 
     # Note: edge_weight_dict format = { (startNode, endNode, transportMode) : weight_value }
 
-    G = BUS_NETWORK
-    dest.lat = dest.get_Latitude()
-    dest.lon = dest.get_Longitude()
+    G = nx.read_graphml(BUS_GRAPH)
 
     ## -- Implements A* search -- ##
 
     # Heuristic = Euclidian distance:
-    g = {}
-    f = {}
     h = {}
-    parent = {}
-    mode_used = {}
-    edge_used = {}
-    precomputed_nearby = {}
-    edge_weight_node = {}
-    mode_num = {}
     for node in graph:
 
-        node.lat = node.get_Latitude()
-        node.lon = node.get_Longitude()
-        dist = euclidian_distance(node, dest)
-        h[node] = dist  # estimated cost is pre-defined
+        h[node] = euclidian_distance(node.Latitude, node.Longitude, dest.Latitude, dest.Longitude) #euclidian_distance(node, dest)
+        node.h = h[node]  # estimated cost is pre-defined
 
         # Initialising other values for A* search for all nodes
-        g[node] = float("inf")
-        f[node] = float("inf")
-        parent[node] = None
-        mode_used[node] = None  # stored as (mode, bus_route) or (mode,)
-        edge_used[node] = None
-
-        edge_weight_node[node] = None
-        mode_num[node] = 0
-
-        # Precompute nearby lists
-        precomputed_nearby[node] = node.Nearby
+        node.g = float("inf")
+        node.f = float("inf")
+        node.parent = None
+        node.mode = None  # stored as (mode, bus_route) or (mode,)
+        node.edge_weight = None
+        node.mode_num = 0
 
     ## -- Start of A* -- ##
 
-    queue = []  # Priority Queue
-    counter = itertools.count()
-    visited_nodes = set()  # Stores nodes with guaranteed shortest path found
+    queue = [start]  # Priority Queue
+    visited_nodes = []  # Stores nodes with guaranteed shortest path found
 
     # For storing computed weights:
     # edge_weight_dict = {} # Format = { (startNode, endNode, transportMode) : weight_value }
 
     # Initialising starting node
-    g[start] = 0
-    f[start] = g[start] + h[start]
-    parent[start] = None
-    mode_num[start] = 0
-    edge_weight_node[start] = 0
+    start.g = 0
+    start.f = start.g + start.h
+    start.parent = None
+    start.mode_num = 0
+    start.edge_weight = 0
 
-    heapq.heappush(queue, (f[start], next(counter), start))
 
     count = [0, 0]
 
     while queue != []:
 
         # Sorting priority queue and selecting lowest cost node
-        _, _, curNode = heapq.heappop(queue)
-
-        if curNode in visited_nodes:
-            continue
+        queue.sort(key=lambda x: x.f)  # sorting by total estimated cost
+        curNode = queue[0]
 
         count[0] += 1
 
         ## -- Checking if destination has been reached -- ##
 
         if curNode == dest:
-
+            
             # print(f"\nnumber of modes taken = {curNode.mode_num}")
             # Backtracking from destination to obtain path from start
             path_array = [(dest, 0, "Journey Complete!")]
@@ -265,31 +215,25 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
 
             while backtracking_node is not None:
                 # (parent_node, edge_weight_travelled, mode_of_travel)
-                total_time += edge_weight_node[backtracking_node]
-                path_array.insert(
-                    0, # insert at position 0
-                    (
-                        parent[backtracking_node],
-                        edge_used[backtracking_node],
-                        mode_used[backtracking_node],
-                    ), # ( parentNode, edgeWeight, modeInfo ) ; where modeInfo = (mode_type:{bus, walk}, route_num)
-                )
-                backtracking_node = parent[backtracking_node]
+                total_time += backtracking_node.edge_weight
+                path_array.insert(0, (backtracking_node.parent, backtracking_node.edge_weight, backtracking_node.mode))
+                backtracking_node = backtracking_node.parent
 
             path_array = path_array[1:] # remove the 'None' from path_array
             total_busses_taken = number_of_busses_taken(path_array)
             # Passenger would have had to wait for N busses
             total_time = total_time + total_busses_taken * Bus_Waiting_Cost # Add waiting time for catching the N busses
 
-            return path_array, total_time, f[dest]
+            return path_array, total_time, dest.f
 
         # Now visited, optimal cost from start node to current node is guaranteed
         # Moving current node from queue to visited_nodes
-        visited_nodes.add(curNode)
+        visited_nodes.append(curNode)
+        queue.remove(curNode)
 
         ## -- Checking all neighbouring nodes -- ##
 
-        nodeOptions = precomputed_nearby[curNode]
+        nodeOptions = curNode.Nearby
         for nodeData in nodeOptions:
 
             count[1] += 1
@@ -298,79 +242,60 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
             if newNode in visited_nodes:
                 continue  # skip nodes already evaluated
 
-            mode = nodeData[1]
-            key = (curNode, newNode, mode)
-
             # Since node is unevaluated, calculate the edge weight
-            if key in edge_weight_dict:
-                edge_weight = edge_weight_dict[key]
+            if (curNode, newNode, nodeData[1]) in edge_weight_dict.keys():
+                edge_weight = edge_weight_dict[(curNode, newNode, nodeData[1:])]
             else:
-                edge_weight = get_weight(G, curNode, newNode, mode)
-                edge_weight_dict[key] = edge_weight
-                if mode == "walk":
-                    edge_weight_dict[(newNode, curNode, mode)] = edge_weight
+                edge_weight = get_weight(G, curNode, newNode, nodeData[1])
+                edge_weight_dict[(curNode, newNode, nodeData[1:])] = edge_weight
+                if nodeData[1] == "walk":
+                    edge_weight_dict[(newNode, curNode, nodeData[1:])] = edge_weight
 
             # Calculating tentative g score: Cost till previous node + (edge-weight x cost_function)
-            if mode_used[curNode] is None:
-                proposed_g = g[curNode] + cached_path_cost(
-                    edge_weight,
-                    nodeData[1],
-                    nodeData[2],
-                    None,
-                    None,
-                    mode_num[curNode],  # mode  # route
-                )
-            else:
-                prev_mode, prev_route = mode_used[curNode]
-                proposed_g = g[curNode] + cached_path_cost(
-                    edge_weight,
-                    nodeData[1],
-                    nodeData[2],
-                    prev_mode,
-                    prev_route,
-                    mode_num[curNode],  # mode  # route
-                )
+            proposed_g = curNode.g + path_cost(edge_weight, nodeData, curNode.mode, curNode.mode_num)
 
-            heapq.heappush(queue, (f[newNode], next(counter), newNode))
+            if newNode not in queue:
+                queue.append(newNode)  # adding previously unseen nodes to the priority queue
 
             # Node is already in priority queue, verify whether proposed value is optimal (lower)
-            if proposed_g >= g[newNode]:
+            elif proposed_g >= newNode.g:
                 continue  # do not update less-efficient paths
 
             # Current node is new or has best/better path from the start node.
 
             ## -- Updating cost values -- ##
 
-            g[newNode] = proposed_g  # curNode.g + path_cost(edge_weight, nodeData, curNode.mode)
-            # print()
-            f[newNode] = g[newNode] + h[newNode]
-            parent[newNode] = curNode
-            mode_used[newNode] = nodeData[
-                1:
-            ]  # also update mode used along this edge (including bus_route)
-            edge_weight_node[newNode] = edge_weight
+            newNode.g = proposed_g # curNode.g + path_cost(edge_weight, nodeData, curNode.mode)
+            newNode.f = newNode.g + newNode.h
+            newNode.parent = curNode
+            newNode.mode = nodeData[1:]  # also update mode used along this edge (including bus_route)
+            newNode.edge_weight = edge_weight
 
-            if mode_used[curNode] == None:
-                mode_num[newNode] = 1
-            elif mode_used[curNode] == "walk":
-                mode_num[newNode] = mode_num[curNode] + 1
-            elif mode_used[curNode] == "bus" and edge_used[curNode] != edge_used[newNode]:
-                mode_num[newNode] = mode_num[curNode] + 1
+            if curNode.mode == None:
+                newNode.mode_num = 1
+            elif curNode.mode[0] == "walk":
+                newNode.mode_num = curNode.mode_num + 1
+            elif curNode.mode[0] == "bus" and curNode.mode[1] != newNode.mode[1]:
+                newNode.mode_num = curNode.mode_num + 1
             else:
-                mode_num[newNode] = mode_num[curNode]
+                newNode.mode_num = curNode.mode_num
 
-    return (
-        Exception("Failure, could not compute path from start to end."),
-        float("inf"),
-        float("inf"),
-    )
+            if show_progress == True:
+                print(".",end='') # computation progress for debug
+
+        if show_progress == True:
+            print(f"{count},,",end='') # computation progress for debug
+
+    return Exception("Failure, could not compute path from start to end."), float('inf'), float("inf")
+
 
     ## -- End of Function -- ##
 
 
+
 ### --- Main --- ###
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     graph = get_bus_access_node_graph("Manchester")
     graph = add_walking_paths(graph)
@@ -379,8 +304,8 @@ if __name__ == "__main__":
     # Input ATCO code or Common Name of bus stop :
 
     #'''
-    START_NODE = "1800NE07821"
-    END_NODE = "1800NF10241"
+    START_NODE = '1800NE07821'
+    END_NODE = '1800NF10241'
 
     start_ind = None
     end_ind = None
@@ -409,27 +334,23 @@ if __name__ == "__main__":
     start_ind, end_ind = graph.index(nodes[0]), graph.index(nodes[1])
 
     # Running A* and obtaining solution :
-    solution_path, total_weights, total_cost = Shortest_Path_Simulation(
-        graph, graph[start_ind], graph[end_ind], show_progress=False
-    )
+    solution_path, total_weights, total_cost = Shortest_Path_Simulation(graph, graph[start_ind], graph[end_ind], show_progress=False)
 
     end_time = time.time()
     print(f"\n\nGraph generated succesfully in time {end_time-start_time:.3f}\n")
 
     ## -- Print statements (for debugging) -- ##
 
-    print(
-        f"Journey from node {graph[start_ind].get_ATCOCode()} ({graph[start_ind].CommonName}) ",
-        end="",
-    )
+    print(f"Journey from node {graph[start_ind].get_ATCOCode()} ({graph[start_ind].CommonName}) ",end='')
     print(f"to node {graph[end_ind].get_ATCOCode()} ({graph[end_ind].CommonName})")
     print(f"Total Cost of journey = {total_cost}\n")
     print(f"Total weight = {total_weights}")
     count = 0
     for node in solution_path:
         count += 1
-        print(f"{count}. {node[0].get_ATCOCode()}: weight = {node[1]}, mode = {node[2]}")
+        print(f"{count}. {node[0].get_ATCOCode()}: mode = {node[1:]}")
     print()
+
 
     ## -- Plotting the solution -- ##
 
@@ -447,11 +368,7 @@ if __name__ == "__main__":
             lat = node[0].get_Latitude()
             lon = node[0].get_Longitude()
 
-            if (
-                i > 0
-                and sol_array[i - 1][2][0] == "bus"
-                and sol_array[i - 1][2][1] not in used_routes
-            ):
+            if i > 0 and sol_array[i - 1][2][0] == "bus" and sol_array[i - 1][2][1] not in used_routes:
                 used_routes.append(sol_array[i - 1][2][1])
 
             # Plot node as marker
@@ -478,6 +395,7 @@ if __name__ == "__main__":
 
         # Output to HTML file
         gmap.draw(name)
+
 
     # Plotting solution in gmplot
     plot_solution(solution_path, f"app/graph_testing/solutions/{start_ind}-to-{end_ind}_sol.html")
