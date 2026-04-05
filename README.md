@@ -22,7 +22,6 @@ This is the GitHub Repo for COMP5530M Group Project.
 6. complete
 - server url `127.0.0.1:5000`
 
-
 ## Routing engine setup
 1. install docker desktop or docker on your cli
 - make sure docker is installed properlly `docker --version`
@@ -34,3 +33,13 @@ This is the GitHub Repo for COMP5530M Group Project.
 4. other commands
 - to start server `docker start valhalla`
 - to stop server `docker stop valhalla`
+
+## How to run frontend
+1. go to the frontend folder
+- `cd frontend`
+2. install the dependencies (make sure node.js is already installed)
+- `npm install`
+3. run the frontend
+- `npm run dev`
+4. complete
+- frontend url - `127.0.0.1:5173`
