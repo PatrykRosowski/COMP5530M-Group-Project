@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Polyline } from 'react-leaflet';
+import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 
-// Pre-defined colors for the bus lines
 const LINE_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-// Initial dummy data
 const INITIAL_ROUTES = [
   {
     id: 'L1',
@@ -25,57 +24,38 @@ const BusNetworkMap = () => {
   const [routes, setRoutes] = useState(INITIAL_ROUTES);
   const [routeCounter, setRouteCounter] = useState(3);
 
-  // Toggle whether a route is drawn on the map
   const toggleRouteVisibility = (id) => {
     setRoutes(routes.map(route => 
       route.id === id ? { ...route, visible: !route.visible } : route
     ));
   };
 
-  // Completely remove a route from the list and map
   const removeRoute = (id) => {
     setRoutes(routes.filter(route => route.id !== id));
   };
 
-  // Simulate fetching or generating a new route
-  const addRoute = () => {
-    // Generate some random coordinates around Leeds for the demo
-    const baseLat = 53.79 + (Math.random() * 0.04 - 0.02);
-    const baseLon = -1.54 + (Math.random() * 0.04 - 0.02);
-    
-    const newRoute = {
-      id: `L${routeCounter}`,
-      name: `Line ${routeCounter}`,
-      visible: true,
-      coordinates: [
-        [baseLat, baseLon],
-        [baseLat + (Math.random() * 0.02), baseLon + (Math.random() * 0.02)],
-        [baseLat + (Math.random() * 0.04), baseLon - (Math.random() * 0.02)]
-      ]
-    };
+  const navigate=useNavigate();
 
-    setRoutes([...routes, newRoute]);
-    setRouteCounter(prev => prev + 1);
-  };
+  const handleEvaluation = () => {
+    navigate('/evaluate'), { state: { activeRoutes: routes }};
+  }
+
+
 
   return (
-    // Outer container matching the wireframe layout
-    <div className="flex h-screen w-screen p-6 gap-6 bg-slate-50 font-sans">
+    <div className="flex h-screen w-screen bg-slate-50 font-sans overflow-hidden">
       
-      {/* LEFT: Map Area */}
-      <div className="flex-grow rounded-2xl overflow-hidden border-2 border-slate-300 shadow-sm relative">
+      <div className="flex-grow relative z-0">
         <MapContainer 
           center={[53.79725, -1.54384]} 
           zoom={13} 
-          className="h-full w-full outline-none z-0"
+          className="h-full w-full outline-none"
           zoomControl={true} 
         >
           <TileLayer
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
-
-          {/* Render only visible lines */}
           {routes.filter(route => route.visible).map((route, index) => (
             <Polyline 
               key={`route-${route.id}`} 
@@ -90,11 +70,9 @@ const BusNetworkMap = () => {
         </MapContainer>
       </div>
 
-      {/* RIGHT: Control Panel */}
-      <div className="w-72 bg-white rounded-2xl border-2 border-slate-300 shadow-sm p-6 flex flex-col">
+      <div className="w-72 bg-white border-l-2 border-slate-300 shadow-xl p-6 flex flex-col z-10">
         <h2 className="text-lg font-bold text-slate-800 mb-6">Active Routes</h2>
         
-        {/* Route List */}
         <div className="flex-grow overflow-y-auto space-y-3 pr-2">
           {routes.length === 0 && (
             <p className="text-sm text-slate-400 italic">No routes loaded.</p>
@@ -110,7 +88,6 @@ const BusNetworkMap = () => {
                   className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <div className="flex items-center gap-2">
-                  {/* Color Swatch */}
                   <div 
                     className="w-3 h-3 rounded-full" 
                     style={{ backgroundColor: LINE_COLORS[index % LINE_COLORS.length] }}
@@ -121,7 +98,6 @@ const BusNetworkMap = () => {
                 </div>
               </label>
               
-              {/* Remove Button */}
               <button 
                 onClick={() => removeRoute(route.id)}
                 className="text-slate-300 hover:text-red-500 transition-colors px-2 py-1 text-xs font-bold rounded"
@@ -133,14 +109,20 @@ const BusNetworkMap = () => {
           ))}
         </div>
 
-        {/* Add Route Button */}
-        <div className="pt-6 mt-4 border-t border-slate-100">
+        <div className="pt-6 mt-4 border-t border-slate-100 flex flex-col gap-3">
           <button 
-            onClick={addRoute}
+            //onClick={addRoute} // add way to process gpx file or coordinates for route
             className="w-full py-3 px-4 bg-white border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <span className="text-lg leading-none">+</span>
             Add Route
+          </button>
+          
+          <button 
+            onClick={handleEvaluation} // will pass all active route as well
+            className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center"
+          >
+            Evaluate
           </button>
         </div>
       </div>
