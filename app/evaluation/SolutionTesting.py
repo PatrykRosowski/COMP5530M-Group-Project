@@ -126,7 +126,7 @@ if __name__ == "__main__":
     ## -- Initialisation -- ##
 
     # Number of (start, end) pairs
-    NUM_START_END_PAIRS = 500
+    NUM_START_END_PAIRS = 15
 
     dir = "app/evaluation/solutions"
     if os.path.exists(dir):
