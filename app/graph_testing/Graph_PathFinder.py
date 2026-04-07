@@ -56,7 +56,8 @@ def cached_path_cost(edge_weight, cur_mode, cur_route, prev_mode, prev_route, no
         return path_cost(edge_weight, nodeData, prev_mode_tuple, node_mode_num)
 
 
-Bus_Waiting_Cost = 20
+BUS_WAITING_COST = 15 * 60 # 15 mins x 60 seconds
+MODE_CHANGE_PUNISHER = 100 # Punishes for changing busses
 
 def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
 
@@ -76,11 +77,11 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
         "bus": 1,
         "tram": 1,
         "walk": 30,
-        "change": 50,  # waiting-time penalty for a new bus
+        "change": 100,  # waiting-time penalty for a new bus
     }
-    Bus_Waiting_Cost = 30  # waiting-time for a bus
+    Bus_Waiting_Cost = BUS_WAITING_COST  # waiting-time for a bus
 
-    Mode_Change_Punisher = 1000
+    Mode_Change_Punisher = MODE_CHANGE_PUNISHER
 
     ## -- Combinations of changing transport modes -- ##
 
@@ -195,13 +196,13 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
 
     # Heuristic = Euclidian distance:
     g = {}
-    f = {}
     h = {}
+    f = {}
     parent = {}
     mode_used = {}
-    edge_used = {}
+    # route_used = {}
     precomputed_nearby = {}
-    edge_weight_node = {}
+    weight_of_edge = {}
     mode_num = {}
     for node in graph:
 
@@ -215,9 +216,9 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
         f[node] = float("inf")
         parent[node] = None
         mode_used[node] = None  # stored as (mode, bus_route) or (mode,)
-        edge_used[node] = None
+        # route_used[node] = None
 
-        edge_weight_node[node] = None
+        weight_of_edge[node] = None
         mode_num[node] = 0
 
         # Precompute nearby lists
@@ -237,7 +238,7 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
     f[start] = g[start] + h[start]
     parent[start] = None
     mode_num[start] = 0
-    edge_weight_node[start] = 0
+    weight_of_edge[start] = 0
 
     heapq.heappush(queue, (f[start], next(counter), start))
 
@@ -265,12 +266,12 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
 
             while backtracking_node is not None:
                 # (parent_node, edge_weight_travelled, mode_of_travel)
-                total_time += edge_weight_node[backtracking_node]
+                total_time += weight_of_edge[backtracking_node]
                 path_array.insert(
                     0, # insert at position 0
                     (
                         parent[backtracking_node],
-                        edge_used[backtracking_node],
+                        weight_of_edge[backtracking_node],
                         mode_used[backtracking_node],
                     ), # ( parentNode, edgeWeight, modeInfo ) ; where modeInfo = (mode_type:{bus, walk}, route_num)
                 )
@@ -279,7 +280,7 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
             path_array = path_array[1:] # remove the 'None' from path_array
             total_busses_taken = number_of_busses_taken(path_array)
             # Passenger would have had to wait for N busses
-            total_time = total_time + total_busses_taken * Bus_Waiting_Cost # Add waiting time for catching the N busses
+            total_time = total_time + total_busses_taken * BUS_WAITING_COST # Add waiting time for catching the N busses
 
             return path_array, total_time, f[dest]
 
@@ -342,28 +343,21 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict={}, show_progr
             ## -- Updating cost values -- ##
 
             g[newNode] = proposed_g  # curNode.g + path_cost(edge_weight, nodeData, curNode.mode)
-            # print()
             f[newNode] = g[newNode] + h[newNode]
             parent[newNode] = curNode
-            mode_used[newNode] = nodeData[
-                1:
-            ]  # also update mode used along this edge (including bus_route)
-            edge_weight_node[newNode] = edge_weight
+            mode_used[newNode] = nodeData[1:]  # also update mode used along this edge (including bus_route)
+            weight_of_edge[newNode] = edge_weight
 
             if mode_used[curNode] == None:
                 mode_num[newNode] = 1
-            elif mode_used[curNode] == "walk":
+            elif mode_used[curNode][0] == "walk":
                 mode_num[newNode] = mode_num[curNode] + 1
-            elif mode_used[curNode] == "bus" and edge_used[curNode] != edge_used[newNode]:
+            elif mode_used[curNode][0] == "bus" and mode_used[curNode][1] != mode_used[newNode][1]:
                 mode_num[newNode] = mode_num[curNode] + 1
             else:
                 mode_num[newNode] = mode_num[curNode]
 
-    return (
-        Exception("Failure, could not compute path from start to end."),
-        float("inf"),
-        float("inf"),
-    )
+    return Exception("Failure, could not compute path from start to end."), float("inf"), float("inf")
 
     ## -- End of Function -- ##
 
