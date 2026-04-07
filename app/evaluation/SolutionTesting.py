@@ -126,7 +126,7 @@ if __name__ == "__main__":
     ## -- Initialisation -- ##
 
     # Number of (start, end) pairs
-    NUM_START_END_PAIRS = 15
+    NUM_START_END_PAIRS = 500
 
     dir = "app/evaluation/solutions"
     if os.path.exists(dir):
@@ -248,12 +248,14 @@ if __name__ == "__main__":
 
     ## -- Outputting Solution Statistics -- ##
 
+    #'''
     filtered_solution_stats = {}
     for i in solution_stats:
         if solution_stats[i][1] != float('inf'):
             filtered_solution_stats[i] = solution_stats[i] #{i: solution_stats[i] for i in solution_stats.keys() and solution_stats[i][1] != float('inf')}
     print_all_statistics(filtered_solution_stats, "'Existing Bus Network'")
     # Space for printing stats of proposed bus network
+    #'''
 
     ## -- End of script -- ##
 

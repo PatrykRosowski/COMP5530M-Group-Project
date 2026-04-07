@@ -36,7 +36,8 @@ def generate_random_endstops(AccessNode_graph):
     return nodes_list
 
 
-Bus_Waiting_Cost = 20
+BUS_WAITING_COST = 15 * 60 # 15 mins x 60 seconds
+MODE_CHANGE_PUNISHER = 100 # Punishes for changing busses
 
 def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
 
@@ -58,9 +59,9 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
         "walk": 30,
         "change": 100,  # waiting-time penalty for a new bus
     }
-    Bus_Waiting_Cost = 20  # waiting-time for a bus
+    Bus_Waiting_Cost = BUS_WAITING_COST  # waiting-time for a bus
 
-    Mode_Change_Punisher = 100
+    Mode_Change_Punisher = MODE_CHANGE_PUNISHER
 
     ## -- Combinations of changing transport modes -- ##
 
@@ -222,7 +223,7 @@ def Shortest_Path_Simulation(graph, start, dest, edge_weight_dict = {}, show_pro
             path_array = path_array[1:] # remove the 'None' from path_array
             total_busses_taken = number_of_busses_taken(path_array)
             # Passenger would have had to wait for N busses
-            total_time = total_time + total_busses_taken * Bus_Waiting_Cost # Add waiting time for catching the N busses
+            total_time = total_time + total_busses_taken * BUS_WAITING_COST # Add waiting time for catching the N busses
 
             return path_array, total_time, dest.f
 
