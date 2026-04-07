@@ -1,5 +1,4 @@
-### --- Imports --- ###
-
+### Imports ###
 from app.data.AccessNode import AccessNode
 from app.data.GetAccessNodes import get_specific_stop_data
 import json
@@ -7,7 +6,6 @@ import pickle
 
 
 ### --- File Extraction --- ###
-
 
 def get_bus_access_node_graph(city):
 

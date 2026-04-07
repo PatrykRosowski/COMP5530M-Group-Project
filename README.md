@@ -26,11 +26,22 @@ This is the GitHub Repo for COMP5530M Group Project.
 ## Routing engine setup
 1. install docker desktop or docker on your cli
 - make sure docker is installed properlly `docker --version`
-2. setup the docker container
-- `docker-compose up valhalla`
+2. pull fresh docker image
+- `docker pull ghcr.io/gis-ops/docker-valhalla/valhalla:latest`
+2. go into `routing_engine` and setup the docker container (check for correct pbf file)
+- `cd routing_engine`
+- `docker compose up -d`
 3. wait few minutes for map building
 - server url `127.0.0.1:8002`
 - to check server status `127.0.0.1:8000/status`
 4. other commands
 - to start server `docker start valhalla`
 - to stop server `docker stop valhalla`
+
+## Others
+### Roads only file
+1. Download and configure osmium on your machine
+2. Download latest `osm.pbf` of the area
+3. Remove geometry from the file
+- `osmium tags-filter <file_name>.osm.pbf w/highway -o roads_only.osm.pbf`
+4. Place the processed `roads_only.osm.pbf` file inside `app/data`

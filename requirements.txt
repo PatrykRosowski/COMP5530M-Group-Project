@@ -18,3 +18,4 @@ pyrosm
 tqdm
 valhalla
 polyline
+scikit-learn
