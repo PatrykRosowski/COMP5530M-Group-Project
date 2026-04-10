@@ -81,7 +81,7 @@ def get_shape_for_stop_sequence(G: nx.DiGraph, node_ids: list[str]) -> str:
         location_type = "break"
 
         if 0 < i < len(node_ids) - 1:
-            location_type = "through"  # use 'through' mode for intermediate stops
+            location_type = "break"  # use 'through' mode for intermediate stops
 
         locations.append(
             {

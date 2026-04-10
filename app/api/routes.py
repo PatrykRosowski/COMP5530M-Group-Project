@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, Response
+from flask import Blueprint, jsonify, Response, request
 import json
 
 from app.business_logic.orchestrator import route_calculation
@@ -21,11 +21,18 @@ def index():
 
 @api_bp.route("/generate-line", methods=["POST", "GET"])
 def main():
-    data = route_calculation()
+    data = request.get_json()
 
-    try:
-        json_output = json.dumps(data, cls=DebugEncoder)
-        return Response(json_output, mimetype="application/json")
-    except TypeError as e:
-        print(f"JSON Error detected: {e}")
-        return jsonify({"error": str(e)})
+    point_a = data["point_a"]
+    point_b = data["point_b"]
+    print(point_a['lat'])
+    print(point_a['lng'])
+    print(point_b['lat'])
+    print(point_b['lng'])
+
+    route_shape = route_calculation([point_a['lat'], point_b['lng']], [point_b['lat'], point_b['lng']], 1)
+    print(route_shape)
+
+    return jsonify({'status': 'received'}), 200
+
+    

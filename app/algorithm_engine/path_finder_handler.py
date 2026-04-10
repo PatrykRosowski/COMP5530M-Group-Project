@@ -23,7 +23,7 @@ def nearest_node(G, lat, lon):
 # Function wrapper for path_finder compute_least_eccentric_path function.
 # Function checks if the bus graph exists. If not, create it.
 # Extract the graph from this function and pass to the path finder.
-def path_finder(start_route: float, end_route: float, K: int):
+def path_finder(start_route: list[float], end_route: list[float], K: int):
 
     # If the bus graph doesnt exist, create it by calling function
     if not os.path.exists(BUS_GRAPH):
@@ -32,6 +32,8 @@ def path_finder(start_route: float, end_route: float, K: int):
 
     # Get the networkx graph from the bus graph file
     G = nx.read_graphml(BUS_GRAPH)
+    print(start_route)
+    print(end_route)
 
     A_nearest = nearest_node(G, start_route[0], start_route[1])
     B_nearest = nearest_node(G, end_route[0], end_route[1])
