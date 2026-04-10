@@ -71,13 +71,15 @@ def mean_busses_taken(solution_stats_arr):
     return avg_bus_num
 
 
-def assorted_travel_time(solution_stats_arr):
+def best_and_worst_travel_time(solution_stats_arr):
 
     edgeweight_array = [solution_stats_arr[i][1] for i in solution_stats_arr]
     edgeweight_array.sort()
     
     num_of_paths = len(solution_stats_arr)
     ten_percent_size = num_of_paths // 10
+    if ten_percent_size == 0:
+        ten_percent_size = 1
     ninety_percent_size = num_of_paths - ten_percent_size
 
     lower_sum = 0
@@ -102,7 +104,7 @@ def print_all_statistics(solution_stats_arr, graph_type = ""):
 
     avg_busses_taken = mean_busses_taken(solution_stats_arr)
 
-    best_time, best_avg, worst_time, worst_avg = assorted_travel_time(solution_stats_arr)
+    best_time, best_avg, worst_time, worst_avg = best_and_worst_travel_time(solution_stats_arr)
 
     graph_type_str = "FOR GRAPH " + graph_type
     print(f"\n\nSTATISTICS of the PATHS COMPUTED for {len(solution_stats_arr)} JOURNEYS {graph_type_str}:\n")
@@ -111,11 +113,11 @@ def print_all_statistics(solution_stats_arr, graph_type = ""):
     print(f"-> Average number of busses for a journey = {avg_busses_taken:.1f} busses per journey\n")
 
     print(f"-> Best Case Analysis -")
-    print(f"---> Shortest journey time = {sec_to_hmsms(best_time)} [{best_time} seconds]")
+    print(f"---> Shortest journey time = {sec_to_hmsms(best_time)} [{best_time:.3f} seconds]")
     print(f"---> Average journey time for shortest 10% of journeys = {sec_to_hmsms(best_avg)} [{best_avg:.3f} seconds]\n")
 
     print(f"-> Worst Case Analysis -")
-    print(f"---> Longest journey time = {sec_to_hmsms(worst_time)} [{worst_time} seconds]")
+    print(f"---> Longest journey time = {sec_to_hmsms(worst_time)} [{worst_time:.3f} seconds]")
     print(f"---> Average journey time for longest 10% of journeys = {sec_to_hmsms(worst_avg)} [{worst_avg:.3f} seconds]\n")
 
     return

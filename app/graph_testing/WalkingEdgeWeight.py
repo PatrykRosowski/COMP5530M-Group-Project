@@ -72,7 +72,7 @@ def coord_to_km(lat1, long1, lat2, long2):
 
 # Inputs 2 nodes, returns Euclidian distance :
 
-
+#'''
 def euclidian_distance(node, target):
 
     # Inputs: AccessNode vertices
@@ -80,7 +80,7 @@ def euclidian_distance(node, target):
     dx = (node.lon - target.lon) * 111320 * cos(radians((node.lat + target.lat) / 2))
     dy = (node.lat - target.lat) * 110540
     return sqrt(dx * dx + dy * dy)  # meters
-
+#'''
 
 ##
 ## Option 1 - Use OpenStreetMap with NetworkX, and inbuilt pathfinding
@@ -246,7 +246,8 @@ def plot_route_val(coords):
 def return_walking_edge_weight(start_node, end_node):
 
     # Calculate straightline distance as a baseline maximum (under 500m)
-    euc_dist = euclidian_distance(start_node, end_node)
+    euc_dist = coord_to_km(start_node.Latitude, start_node.Longitude, end_node.Latitude, end_node.Longitude)
+    # euc_dist = euclidian_distance(start_node, end_node)
     return euc_dist * AVG_WALKING_SPEED
 
     # lat1, long1 = start_node.Latitude, start_node.Longitude

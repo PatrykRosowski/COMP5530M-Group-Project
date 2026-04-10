@@ -34,13 +34,11 @@ dist/
 build/
 *.egg-info/
 
-### Valhall and Docker ###
-routing_engine/*
-
 ### Frontend ###
 node_modules/
 dist/
 build/
 
 bus_graph.graphml
+
 .python-version

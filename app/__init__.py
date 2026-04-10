@@ -9,6 +9,10 @@ def create_app(config_class=Config):
 
     CORS(app)
 
+    from app.data.ExportBusGraphAsNetworkX import get_bus_graph_networkx
+
+    get_bus_graph_networkx()
+
     from app.api import api_bp
 
     app.register_blueprint(api_bp, url_prefix="/api")

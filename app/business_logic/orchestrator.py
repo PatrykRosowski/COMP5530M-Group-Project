@@ -65,6 +65,12 @@ def route_calculation() -> tuple[tuple, int]:
 
     print("Generating network config")
     all_network_config = generate_network_config(all_line_candidates)
+
+    all_network_config = [
+        config for config in all_network_config
+        if len({tuple(path) for path in config}) == len(config)
+    ]
+
     print("Network config generation completed")
     best_latency = float("inf")
     best_config = None
@@ -96,40 +102,36 @@ def route_calculation() -> tuple[tuple, int]:
 
     print("Complete")
 
-    frontend_response = {
-        'latency': best_latency,
-        'lines': [],
-        'stops': []
-    }
+    frontend_response = {"latency": best_latency, "lines": [], "stops": []}
 
     for path_of_nodes in best_config:
         geometry = get_shape_for_stop_sequence(G, path_of_nodes)
-        frontend_response['lines'].append(geometry)
+        frontend_response["lines"].append(geometry)
 
     unique_nodes = set(node for path in best_config for node in path)
 
     for node_id in unique_nodes:
         node_data = G.nodes[node_id]
 
-        frontend_response['stops'].append({
-            'id': node_id,
-            'lat': node_data['Latitude'],
-            'lon': node_data['Longitude'],
-            'name': node_data['CommonName']
-        })
+        frontend_response["stops"].append(
+            {
+                "id": node_id,
+                "lat": node_data["Latitude"],
+                "lon": node_data["Longitude"],
+                "name": node_data["CommonName"],
+            }
+        )
 
-    print("\n" + "="*30)
+    print("\n" + "=" * 30)
     print(f"FINAL CONFIGURATION (Latency: {best_latency})")
     for i, line_path in enumerate(best_config):
         print(f"\nBus Line {i + 1}:")
         print(f"  Stop Count: {len(line_path)}")
         print(f"  Stop IDs:   {line_path}")
-        
+
         # Optional: Print names if available to make it readable
-        names = [G.nodes[n].get('CommonName', 'Unknown') for n in line_path]
+        names = [G.nodes[n].get("CommonName", "Unknown") for n in line_path]
         print(f"  Stop Names: {names}")
-    print("="*30 + "\n")
+    print("=" * 30 + "\n")
 
     return frontend_response
-
-
