@@ -1,46 +1,48 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, useMapEvents, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Marker, useMap, useMapEvents, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const LINE_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+const ROUTE_COLORS = ['#0891B2', '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#DC2626'];
 
 const makeIcon = (label, color) =>
   L.divIcon({
     className: '',
     html: `<div style="
-      width:28px;height:28px;border-radius:50%;
-      background:${color};border:2.5px solid white;
-      box-shadow:0 1px 6px rgba(0,0,0,0.25);
+      width:30px;height:30px;border-radius:50%;
+      background:${color};border:3px solid white;
+      box-shadow:0 2px 8px rgba(0,0,0,0.15);
       display:flex;align-items:center;justify-content:center;
-      font-family:monospace;font-size:11px;font-weight:700;color:white;
+      font-size:11px;font-weight:700;color:white;
+      font-family:'Fira Code',monospace;
     ">${label}</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
   });
 
 const makeArrowIcon = (color, rotation) =>
   L.divIcon({
     className: '',
-    html: `<svg width="14" height="14" viewBox="0 0 14 14" style="transform: rotate(${rotation}deg);">
-      <polygon points="7,0 14,12 0,12" fill="${color}"/>
+    html: `<svg width="16" height="16" viewBox="0 0 16 16" style="transform: rotate(${rotation}deg);">
+      <polygon points="8,0 16,14 0,14" fill="${color}"/>
     </svg>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
   });
 
 const makeStopIcon = (index) =>
   L.divIcon({
     className: '',
     html: `<div style="
-      width:18px;height:18px;border-radius:50%;
-      background:#8b5cf6;border:2px solid white;
-      box-shadow:0 1px 4px rgba(0,0,0,0.2);
+      width:20px;height:20px;border-radius:50%;
+      background:#0891B2;border:2.5px solid white;
+      box-shadow:0 1px 4px rgba(0,0,0,0.15);
       display:flex;align-items:center;justify-content:center;
-      font-family:monospace;font-size:8px;font-weight:700;color:white;
+      font-size:8px;font-weight:600;color:white;
+      font-family:'Fira Code',monospace;
     ">${index + 1}</div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 
 const calcBearing = (lat1, lng1, lat2, lng2) => {
@@ -81,9 +83,9 @@ const DirectionalPolyline = ({ positions, color, weight = 5, opacity = 0.85, arr
           icon={makeStopIcon(idx)}
         >
           <Tooltip sticky>
-            <span className="font-mono text-[10px]">{stop.name}</span>
+            <span style={{ fontFamily: "'Fira Code', monospace", fontSize: '11px' }}>{stop.name}</span>
             {stop.street && (
-              <span className="font-mono text-[9px] text-slate-400 block">{stop.street}</span>
+              <span style={{ fontSize: '10px', color: '#64748B', display: 'block', marginTop: '2px' }}>{stop.street}</span>
             )}
           </Tooltip>
         </Marker>
@@ -92,15 +94,29 @@ const DirectionalPolyline = ({ positions, color, weight = 5, opacity = 0.85, arr
 
   return (
     <>
-      <Polyline positions={positions} pathOptions={{ color, weight, opacity }} />
+      <Polyline positions={positions} pathOptions={{ color, weight, opacity, shadowBlur: 6, shadowColor: color + '50' }} />
       {arrowMarkers}
       {stopMarkers}
     </>
   );
 };
 
-const ICON_A = makeIcon('A', '#3b82f6');
-const ICON_B = makeIcon('B', '#ef4444');
+const ICON_A = makeIcon('A', '#0891B2');
+const ICON_B = makeIcon('B', '#DC2626');
+
+const MapResizer = () => {
+  const map = useMap();
+  React.useEffect(() => {
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('fullscreenchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('fullscreenchange', handleResize);
+    };
+  }, [map]);
+  return null;
+};
 
 const ClickHandler = ({ onMapClick }) => {
   useMapEvents({ click: (e) => onMapClick(e.latlng) });
@@ -118,8 +134,15 @@ const parseCoords = (str) => {
   return null;
 };
 
+const MapPinIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
 const RouteBuilder = () => {
-  const [selectingFor, setSelectingFor] = useState(null); // 'A' | 'B' | null
+  const [selectingFor, setSelectingFor] = useState(null);
   const [pointA, setPointA] = useState(null);
   const [pointB, setPointB] = useState(null);
   const [inputA, setInputA] = useState('');
@@ -191,13 +214,11 @@ const RouteBuilder = () => {
       });
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
       const data = await response.json();
-      // GeoJSON coordinates are [lng, lat]; Leaflet expects [lat, lng]
       const leafletCoords = data.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
       setGeneratedRoute({ leaflet: leafletCoords, geojson: data });
     } catch (err) {
       console.error('Route generation failed:', err);
       setApiError('Could not reach server — showing preview route');
-      // Fallback preview: straight line with a midpoint wobble
       const fallbackCoords = [
         [pointA.lat, pointA.lng],
         [(pointA.lat + pointB.lat) / 2 + 0.003, (pointA.lng + pointB.lng) / 2 - 0.004],
@@ -215,7 +236,6 @@ const RouteBuilder = () => {
     const name = `Line ${routeCounterRef.current}`;
     routeCounterRef.current += 1;
 
-    // Prefer saving the original GeoJSON feature from the server; fall back to synthetic coords
     const routeObj = generatedRoute.geojson
       ? { id, name, ...generatedRoute.geojson }
       : {
@@ -225,7 +245,6 @@ const RouteBuilder = () => {
           properties: {},
           geometry: {
             type: 'LineString',
-            // Convert back to GeoJSON [lng, lat] order for the saved file
             coordinates: generatedRoute.leaflet.map(([lat, lng]) => [lng, lat]),
           },
           meta: {
@@ -252,13 +271,11 @@ const RouteBuilder = () => {
   const canGenerate = pointA && pointB && !isLoading;
   const canSave = !!generatedRoute;
 
-  const cursorClass =
-    selectingFor ? 'cursor-crosshair' : 'cursor-default';
+  const cursorClass = selectingFor ? 'cursor-crosshair' : 'cursor-default';
 
   return (
-    <div className={`relative h-screen w-screen overflow-hidden font-mono ${cursorClass}`}>
+    <div className={`relative h-screen w-screen overflow-hidden bg-[#E2E8F0] ${cursorClass}`}>
 
-      {/* Full-bleed map */}
       <MapContainer
         center={[53.47941, -2.24464]}
         zoom={13}
@@ -269,13 +286,14 @@ const RouteBuilder = () => {
           attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
+        <MapResizer />
         <ClickHandler onMapClick={handleMapClick} />
         {pointA && <Marker position={pointA} icon={ICON_A} />}
         {pointB && <Marker position={pointB} icon={ICON_B} />}
         {generatedRoute && (
           <DirectionalPolyline
             positions={generatedRoute.leaflet}
-            color={LINE_COLORS[0]}
+            color={ROUTE_COLORS[0]}
             weight={5}
             opacity={0.85}
             arrowSpacing={8}
@@ -284,178 +302,149 @@ const RouteBuilder = () => {
         )}
       </MapContainer>
 
-      {/* Floating panel — top right */}
-      <div className="absolute top-4 right-4 z-10 w-72 flex flex-col gap-3">
+      <div className="absolute top-5 right-5 z-10 w-80 flex flex-col gap-4">
 
-        {/* Points card */}
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/60 p-5">
+        <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-5 border-t-2 border-t-slate-200">
 
-          <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-slate-400 mb-4">
-            Route Builder
-          </p>
 
-          {/* Point A */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-white">A</span>
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            <div className="group">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-6 h-6 rounded-full bg-cyan-100 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-cyan-600" style={{ fontFamily: "'Fira Code', monospace" }}>A</span>
                 </div>
-                <span className="text-[10px] font-semibold tracking-widest uppercase text-slate-500">
-                  Point A
-                </span>
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Origin</span>
               </div>
+              <input
+                type="text"
+                placeholder="53.797, -1.543"
+                value={inputA}
+                onChange={(e) => handleInputChange('A', e.target.value)}
+                onBlur={() => handleInputBlur('A')}
+                className={`w-full text-sm px-3 py-2.5 bg-slate-50 border-2 ${inputAError ? 'border-red-300 bg-red-50' : 'border-slate-200 focus:border-cyan-400'} rounded-xl text-slate-700 placeholder:text-slate-300 focus:outline-none transition-all`}
+                style={{ fontFamily: "'Fira Code', monospace" }}
+              />
               <button
                 onClick={() => setSelectingFor(selectingFor === 'A' ? null : 'A')}
-                className={`text-[9px] font-semibold tracking-widest uppercase px-2.5 py-1 rounded-lg border transition-all ${
+                className={`mt-2 w-full text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   selectingFor === 'A'
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-blue-500'
+                    ? 'bg-cyan-100 text-cyan-700 border border-cyan-300'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-150 border border-transparent hover:border-slate-200'
                 }`}
               >
-                {selectingFor === 'A' ? 'Selecting…' : 'Pick on map'}
+                <MapPinIcon />
+                {selectingFor === 'A' ? 'Cancel' : 'Pick on map'}
               </button>
             </div>
-            <input
-              type="text"
-              placeholder="lat, lng  e.g. 53.797, -1.543"
-              value={inputA}
-              onChange={(e) => handleInputChange('A', e.target.value)}
-              onBlur={() => handleInputBlur('A')}
-              className={`w-full text-[11px] font-mono px-3 py-2 rounded-xl border bg-white/70 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-1 transition-all ${
-                inputAError
-                  ? 'border-red-300 focus:ring-red-300'
-                  : 'border-slate-200 focus:ring-blue-300'
-              }`}
-            />
-            {inputAError && (
-              <p className="text-[9px] text-red-400 mt-1 tracking-wide">
-                Invalid format — use: lat, lng
-              </p>
-            )}
-          </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-2 my-2">
-            <div className="flex-1 h-px bg-slate-100" />
-            <div className="w-5 h-5 rounded-full border border-slate-200 flex items-center justify-center">
-              <svg className="w-2.5 h-2.5 text-slate-300" viewBox="0 0 10 14" fill="none">
-                <path d="M5 1v12M2 10l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <div className="flex-1 h-px bg-slate-100" />
-          </div>
-
-          {/* Point B */}
-          <div className="mb-1">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-white">B</span>
+            <div className="group">
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-red-500" style={{ fontFamily: "'Fira Code', monospace" }}>B</span>
                 </div>
-                <span className="text-[10px] font-semibold tracking-widest uppercase text-slate-500">
-                  Point B
-                </span>
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Destination</span>
               </div>
+              <input
+                type="text"
+                placeholder="53.805, -1.551"
+                value={inputB}
+                onChange={(e) => handleInputChange('B', e.target.value)}
+                onBlur={() => handleInputBlur('B')}
+                className={`w-full text-sm px-3 py-2.5 bg-slate-50 border-2 ${inputBError ? 'border-red-300 bg-red-50' : 'border-slate-200 focus:border-cyan-400'} rounded-xl text-slate-700 placeholder:text-slate-300 focus:outline-none transition-all`}
+                style={{ fontFamily: "'Fira Code', monospace" }}
+              />
               <button
                 onClick={() => setSelectingFor(selectingFor === 'B' ? null : 'B')}
-                className={`text-[9px] font-semibold tracking-widest uppercase px-2.5 py-1 rounded-lg border transition-all ${
+                className={`mt-2 w-full text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   selectingFor === 'B'
-                    ? 'bg-red-500 text-white border-red-500'
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-red-300 hover:text-red-500'
+                    ? 'bg-cyan-100 text-cyan-700 border border-cyan-300'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-150 border border-transparent hover:border-slate-200'
                 }`}
               >
-                {selectingFor === 'B' ? 'Selecting…' : 'Pick on map'}
+                <MapPinIcon />
+                {selectingFor === 'B' ? 'Cancel' : 'Pick on map'}
               </button>
             </div>
-            <input
-              type="text"
-              placeholder="lat, lng  e.g. 53.805, -1.551"
-              value={inputB}
-              onChange={(e) => handleInputChange('B', e.target.value)}
-              onBlur={() => handleInputBlur('B')}
-              className={`w-full text-[11px] font-mono px-3 py-2 rounded-xl border bg-white/70 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-1 transition-all ${
-                inputBError
-                  ? 'border-red-300 focus:ring-red-300'
-                  : 'border-slate-200 focus:ring-red-300'
+          </div>
+
+          {inputAError && <p className="text-[11px] text-red-500 mb-3">Invalid format — use: lat, lng</p>}
+          {inputBError && <p className="text-[11px] text-red-500 mb-3">Invalid format — use: lat, lng</p>}
+
+          <div className="flex flex-col gap-2.5">
+            <button
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              className={`w-full py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                canGenerate
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-md hover:shadow-lg'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
-            />
-            {inputBError && (
-              <p className="text-[9px] text-red-400 mt-1 tracking-wide">
-                Invalid format — use: lat, lng
-              </p>
-            )}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="10" />
+                  </svg>
+                  Generating route...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                  Generate Route
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleSave}
+              disabled={!canSave}
+              className={`w-full py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                canSave
+                  ? saveSuccess
+                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                    : 'bg-white text-slate-600 border-2 border-slate-200 hover:border-cyan-400 hover:text-cyan-600'
+                  : 'bg-slate-100 text-slate-400 border border-transparent cursor-not-allowed'
+              }`}
+            >
+              {saveSuccess ? (
+                <>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Route Saved
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  Save Line
+                </>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Error notice */}
         {apiError && (
-          <div className="bg-amber-50/90 backdrop-blur-md rounded-2xl border border-amber-200/60 px-4 py-2.5">
-            <p className="text-[9px] text-amber-600 tracking-wide">{apiError}</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p className="text-xs text-amber-700">{apiError}</p>
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={handleGenerate}
-            disabled={!canGenerate}
-            className={`w-full py-3 px-4 text-xs font-semibold tracking-widest uppercase rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 ${
-              canGenerate
-                ? 'bg-slate-900/90 backdrop-blur-md hover:bg-slate-900 text-white'
-                : 'bg-slate-100/90 text-slate-400 cursor-not-allowed shadow-none'
-            }`}
-          >
-            {isLoading ? (
-              <>
-                <svg className="w-3 h-3 animate-spin" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="10" />
-                </svg>
-                Generating…
-              </>
-            ) : (
-              <>
-                Generate
-                <span className="text-slate-400">→</span>
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={handleSave}
-            disabled={!canSave}
-            className={`w-full py-3 px-4 text-xs font-semibold tracking-widest uppercase rounded-2xl border transition-all flex items-center justify-center gap-2 ${
-              canSave
-                ? saveSuccess
-                  ? 'bg-emerald-50/90 backdrop-blur-md border-emerald-200/60 text-emerald-600 shadow-lg'
-                  : 'bg-white/90 backdrop-blur-md border-slate-200/60 hover:bg-white hover:border-slate-300 text-slate-700 shadow-lg'
-                : 'bg-white/50 border-slate-100 text-slate-300 cursor-not-allowed shadow-none'
-            }`}
-          >
-            {saveSuccess ? (
-              <>
-                <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                  <path d="M1.5 6l3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Saved
-              </>
-            ) : (
-              <>
-                <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Save Line
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Hint when selecting */}
         {selectingFor && (
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/60 px-4 py-2.5 flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${selectingFor === 'A' ? 'bg-blue-400' : 'bg-red-400'}`} />
-            <p className="text-[10px] text-slate-500 tracking-wide">
-              Click the map to place point {selectingFor}
+          <div className="bg-white border border-cyan-200 rounded-xl px-4 py-3 flex items-center gap-3 shadow-md">
+            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse-soft" />
+            <p className="text-sm text-slate-600 font-medium">
+              Click on map to place point <span className="text-cyan-600 font-bold" style={{ fontFamily: "'Fira Code', monospace" }}>{selectingFor}</span>
             </p>
           </div>
         )}

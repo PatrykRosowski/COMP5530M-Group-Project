@@ -1,6 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+
+const MapResizer = () => {
+  const map = useMap();
+  React.useEffect(() => {
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('fullscreenchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('fullscreenchange', handleResize);
+    };
+  }, [map]);
+  return null;
+};
+
+const ClockIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+const BusIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 6v6M16 6v6M2 12h20M4 18V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+  </svg>
+);
+
+const TrendUpIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
+  </svg>
+);
+
+const TrendDownIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+    <polyline points="17 18 23 18 23 12" />
+  </svg>
+);
+
+
+
+const StatCard = ({ label, value, icon, accent = false, trendUp, isLoading }) => (
+  <div className={`flex items-center gap-4 py-4 px-5 rounded-xl transition-all duration-200 ${accent ? 'bg-slate-50 border border-slate-100' : 'bg-white border border-slate-100 hover:border-cyan-200 hover:shadow-sm'}`}>
+    <div className={`p-2.5 rounded-xl ${accent ? 'bg-cyan-50' : 'bg-cyan-100'}`}>
+      <span className={accent ? 'text-cyan-500' : 'text-cyan-600'}>{icon}</span>
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        {label}
+      </p>
+      {isLoading ? (
+        <div className="h-7 bg-slate-200 animate-shimmer rounded-md w-20 mt-1" />
+      ) : (
+        <p className={`text-xl font-bold tabular-nums mt-0.5 ${accent ? 'text-slate-400' : 'text-slate-800'}`} style={{ fontFamily: "'Fira Code', monospace" }}>
+          {value !== null && value !== undefined ? value : '—'}
+        </p>
+      )}
+    </div>
+    {trendUp !== undefined && !isLoading && (
+      <div className={`p-2 rounded-lg ${trendUp ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-500'}`}>
+        {trendUp ? <TrendUpIcon /> : <TrendDownIcon />}
+      </div>
+    )}
+  </div>
+);
 
 const EvaluationPage = () => {
   const [stats, setStats] = useState({
@@ -47,33 +115,9 @@ const EvaluationPage = () => {
     fetchStats();
   }, []);
 
-  const StatRow = ({ label, value, accent = false }) => (
-    <div className={`flex flex-col gap-1 py-3 border-b border-slate-100 last:border-0 ${accent ? 'opacity-60' : ''}`}>
-      <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-slate-400">
-        {label}
-      </span>
-      {isLoading ? (
-        <div className="h-5 bg-slate-100 animate-pulse rounded-md w-20" />
-      ) : (
-        <span className="text-sm font-semibold text-slate-800 tabular-nums">
-          {value !== null && value !== undefined ? value : '—'}
-        </span>
-      )}
-    </div>
-  );
-
-  const Divider = ({ label }) => (
-    <div className="flex items-center gap-2 py-1">
-      <div className="flex-1 h-px bg-slate-100" />
-      <span className="text-[9px] tracking-widest uppercase text-slate-300 font-medium">{label}</span>
-      <div className="flex-1 h-px bg-slate-100" />
-    </div>
-  );
-
   return (
-    <div className="relative h-screen w-screen overflow-hidden font-mono">
+    <div className="relative h-screen w-screen overflow-hidden bg-[#E2E8F0]">
 
-      {/* Full-bleed map */}
       <MapContainer
         center={[53.79725, -1.54384]}
         zoom={13}
@@ -84,40 +128,36 @@ const EvaluationPage = () => {
           attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
+        <MapResizer />
       </MapContainer>
 
-      {/* Floating panel — top right */}
-      <div className="absolute top-4 right-4 z-10 w-72">
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/60 p-5">
+      <div className="absolute top-5 right-5 z-10 w-80">
+        <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-5 border-t-2 border-t-slate-200">
 
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-slate-400">
-              Journey Statistics
-            </p>
-            {!isLoading && (
-              <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-amber-400' : 'bg-emerald-400'}`} title={error ? 'Offline data' : 'Live'} />
-            )}
-          </div>
 
-          {error && (
-            <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200/60 rounded-xl">
-              <p className="text-[9px] text-amber-600 tracking-wide">Offline — showing cached data</p>
+
+          {!isLoading && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`w-2 h-2 rounded-full ${error ? 'bg-amber-400' : 'bg-emerald-400'} animate-pulse-soft`} />
+              <span className="text-xs font-medium text-slate-400">
+                {error ? 'Using cached data' : 'Live data'}
+              </span>
             </div>
           )}
 
-          {/* Stats */}
-          <div className="flex flex-col">
-            <StatRow label="Average Time" value={stats.averageTime} />
-            <StatRow label="Average Buses" value={stats.averageNumBus} />
+          {error && (
+            <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
+              <p className="text-xs text-amber-600">Network unavailable — showing offline data</p>
+            </div>
+          )}
 
-            <Divider label="Shortest" />
-            <StatRow label="Shortest Journey" value={stats.shortestJourneyTime} />
-            <StatRow label="Avg (Bottom 10%)" value={stats.avgShortest10} accent />
-
-            <Divider label="Longest" />
-            <StatRow label="Longest Journey" value={stats.longestJourneyTime} />
-            <StatRow label="Avg (Top 10%)" value={stats.avgLongest10} accent />
+          <div className="flex flex-col gap-3">
+            <StatCard label="Average Time" value={stats.averageTime} icon={<ClockIcon />} isLoading={isLoading} />
+            <StatCard label="Average Buses" value={stats.averageNumBus} icon={<BusIcon />} isLoading={isLoading} />
+            <StatCard label="Shortest Journey" value={stats.shortestJourneyTime} icon={<ClockIcon />} trendUp={true} isLoading={isLoading} />
+            <StatCard label="Avg (Bottom 10%)" value={stats.avgShortest10} icon={<ClockIcon />} accent trendUp={true} isLoading={isLoading} />
+            <StatCard label="Longest Journey" value={stats.longestJourneyTime} icon={<ClockIcon />} trendUp={false} isLoading={isLoading} />
+            <StatCard label="Avg (Top 10%)" value={stats.avgLongest10} icon={<ClockIcon />} accent trendUp={false} isLoading={isLoading} />
           </div>
         </div>
       </div>
