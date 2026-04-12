@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Marker, useMapEvents, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -18,6 +18,86 @@ const makeIcon = (label, color) =>
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   });
+
+const makeArrowIcon = (color, rotation) =>
+  L.divIcon({
+    className: '',
+    html: `<svg width="14" height="14" viewBox="0 0 14 14" style="transform: rotate(${rotation}deg);">
+      <polygon points="7,0 14,12 0,12" fill="${color}"/>
+    </svg>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+
+const makeStopIcon = (index) =>
+  L.divIcon({
+    className: '',
+    html: `<div style="
+      width:18px;height:18px;border-radius:50%;
+      background:#8b5cf6;border:2px solid white;
+      box-shadow:0 1px 4px rgba(0,0,0,0.2);
+      display:flex;align-items:center;justify-content:center;
+      font-family:monospace;font-size:8px;font-weight:700;color:white;
+    ">${index + 1}</div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  });
+
+const calcBearing = (lat1, lng1, lat2, lng2) => {
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+  const lat1Rad = lat1 * (Math.PI / 180);
+  const lat2Rad = lat2 * (Math.PI / 180);
+  const y = Math.sin(dLng) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng);
+  let bearing = Math.atan2(y, x) * (180 / Math.PI);
+  bearing = (bearing + 360) % 360;
+  return bearing;
+};
+
+const DirectionalPolyline = ({ positions, color, weight = 5, opacity = 0.85, arrowSpacing = 8, stops = null }) => {
+  if (!positions || positions.length < 2) return null;
+
+  const arrowMarkers = [];
+  for (let i = arrowSpacing; i < positions.length - 1; i += arrowSpacing) {
+    const [lat1, lng1] = positions[i - 1];
+    const [lat2, lng2] = positions[i];
+    const midLat = (lat1 + lat2) / 2;
+    const midLng = (lng1 + lng2) / 2;
+    const bearing = calcBearing(lat1, lng1, lat2, lng2);
+    arrowMarkers.push(
+      <Marker
+        key={`arrow-${i}`}
+        position={[midLat, midLng]}
+        icon={makeArrowIcon(color, bearing)}
+      />
+    );
+  }
+
+  const stopMarkers = stops
+    ? stops.map((stop, idx) => (
+        <Marker
+          key={`stop-${stop.id || idx}`}
+          position={[stop.lat, stop.lng]}
+          icon={makeStopIcon(idx)}
+        >
+          <Tooltip sticky>
+            <span className="font-mono text-[10px]">{stop.name}</span>
+            {stop.street && (
+              <span className="font-mono text-[9px] text-slate-400 block">{stop.street}</span>
+            )}
+          </Tooltip>
+        </Marker>
+      ))
+    : null;
+
+  return (
+    <>
+      <Polyline positions={positions} pathOptions={{ color, weight, opacity }} />
+      {arrowMarkers}
+      {stopMarkers}
+    </>
+  );
+};
 
 const ICON_A = makeIcon('A', '#3b82f6');
 const ICON_B = makeIcon('B', '#ef4444');
@@ -193,9 +273,13 @@ const RouteBuilder = () => {
         {pointA && <Marker position={pointA} icon={ICON_A} />}
         {pointB && <Marker position={pointB} icon={ICON_B} />}
         {generatedRoute && (
-          <Polyline
+          <DirectionalPolyline
             positions={generatedRoute.leaflet}
-            pathOptions={{ color: LINE_COLORS[0], weight: 5, opacity: 0.85 }}
+            color={LINE_COLORS[0]}
+            weight={5}
+            opacity={0.85}
+            arrowSpacing={8}
+            stops={generatedRoute.geojson?.properties?.stops || null}
           />
         )}
       </MapContainer>
