@@ -31,8 +31,5 @@ def main():
     print(point_b['lng'])
 
     route_shape = route_calculation([point_a['lat'], point_a['lng']], [point_b['lat'], point_b['lng']], 1)
-    print(route_shape)
 
     return jsonify(route_shape), 200
-
-    

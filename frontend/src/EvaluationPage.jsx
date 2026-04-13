@@ -131,8 +131,8 @@ const EvaluationPage = () => {
         <MapResizer />
       </MapContainer>
 
-      <div className="absolute top-5 right-5 z-10 w-80">
-        <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-5 border-t-2 border-t-slate-200">
+      <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-5 sm:right-5 sm:bottom-auto sm:w-80 p-4 sm:p-0">
+        <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-5 border-t-2 border-t-slate-200 max-h-[60vh] sm:max-h-none overflow-y-auto">
 
 
 
