@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
@@ -79,8 +79,18 @@ const RouteTag = ({ color, label }) => (
 );
 
 const BusNetworkMap = () => {
-  const [routes, setRoutes] = useState(INITIAL_ROUTES);
+  const [routes, setRoutes] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch('/data/ManchesterRoutesWithRoads.json')
+      .then(res => {
+        if (!res.ok) throw new Error('File not found');
+        return res.json();
+      })
+      .then(data => setRoutes(data))
+      .catch(() => setRoutes(INITIAL_ROUTES));
+  }, []);
 
   const toggleRouteVisibility = (id) => {
     setRoutes(routes.map(route =>
@@ -123,7 +133,7 @@ const BusNetworkMap = () => {
         ))}
       </MapContainer>
 
-      <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-5 sm:right-5 sm:bottom-auto sm:w-72 flex flex-col gap-4 p-4 sm:p-0">
+      <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-5 sm:right-5 sm:bottom-auto sm:w-72 flex flex-col gap-4 p-4 sm:p-0 ml-5">
         <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-5 border border-slate-100 max-h-[60vh] overflow-y-auto">
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Active Routes</h3>
           
