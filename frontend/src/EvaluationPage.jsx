@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
+import NavBar from './Navbar';
+
 const MapResizer = () => {
   const map = useMap();
   React.useEffect(() => {
@@ -117,7 +119,7 @@ const EvaluationPage = () => {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#E2E8F0]">
-
+      <NavBar className="absolute top-5 left-5 z-20 w-80" />
       <MapContainer
         center={[53.47941, -2.24464]}
         zoom={13}
@@ -131,7 +133,7 @@ const EvaluationPage = () => {
         <MapResizer />
       </MapContainer>
 
-      <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-5 sm:right-5 sm:bottom-auto sm:w-80 p-4 sm:p-0 ml-5">
+      <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-[calc(5rem+1rem)] sm:right-5 sm:bottom-auto sm:w-80 p-4 sm:p-0 ml-5">
         <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-5 border-t-2 border-t-slate-200 max-h-[60vh] sm:max-h-none overflow-y-auto">
 
 

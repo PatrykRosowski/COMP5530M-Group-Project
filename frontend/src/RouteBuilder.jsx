@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap, useMapEvents, Toolti
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+import NavBar from './Navbar';
+
 const ROUTE_COLORS = ['#0891B2', '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#DC2626'];
 
 const makeIcon = (label, color) =>
@@ -275,7 +277,7 @@ const RouteBuilder = () => {
 
   return (
     <div className={`relative h-screen w-screen overflow-hidden bg-[#E2E8F0] ${cursorClass}`}>
-
+      <NavBar className="absolute top-5 left-5 z-20 w-80" />
       <MapContainer
         center={[53.47941, -2.24464]}
         zoom={13}
@@ -302,7 +304,7 @@ const RouteBuilder = () => {
         )}
       </MapContainer>
 
-      <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-5 sm:right-5 sm:bottom-auto sm:w-80 flex flex-col gap-4 p-4 sm:p-0 ml-5">
+      <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-[calc(5rem+1rem)] sm:right-5 sm:bottom-auto sm:w-80 flex flex-col gap-4 p-4 sm:p-0 ml-5">
         <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-5 border-t-2 border-t-slate-200 max-h-[50vh] sm:max-h-none overflow-y-auto">
 
 
