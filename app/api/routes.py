@@ -33,3 +33,13 @@ def main():
     route_shape = route_calculation([point_a['lat'], point_a['lng']], [point_b['lat'], point_b['lng']], 1)
 
     return jsonify(route_shape), 200
+
+
+@api_bp.route("/routes", methods=["GET"])
+def get_routes():
+    try:
+        with open("ManchesterRoutesWithRoads.json", "r") as f:
+            data = json.load(f)
+        return jsonify(data), 200
+    except FileNotFoundError:
+        return jsonify({"error": "Routes file not found. Run scripts/generate_bus_routes.py first."}), 404

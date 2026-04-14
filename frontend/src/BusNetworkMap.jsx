@@ -83,7 +83,7 @@ const BusNetworkMap = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('/data/ManchesterRoutesWithRoads.json')
+    fetch('http://127.0.0.1:5000/api/routes')
       .then(res => {
         if (!res.ok) throw new Error('File not found');
         return res.json();
@@ -110,7 +110,7 @@ const BusNetworkMap = () => {
     <div className="relative h-screen w-screen overflow-hidden bg-[#E2E8F0]">
 
       <MapContainer
-        center={[53.79725, -1.54384]}
+        center={[53.47941, -2.24464]}
         zoom={13}
         className="absolute inset-0 h-full w-full z-0"
         zoomControl={false}

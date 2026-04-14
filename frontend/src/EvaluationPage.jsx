@@ -119,7 +119,7 @@ const EvaluationPage = () => {
     <div className="relative h-screen w-screen overflow-hidden bg-[#E2E8F0]">
 
       <MapContainer
-        center={[53.79725, -1.54384]}
+        center={[53.47941, -2.24464]}
         zoom={13}
         className="absolute inset-0 h-full w-full z-0"
         zoomControl={false}

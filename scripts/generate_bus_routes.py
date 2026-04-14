@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 VALHALLA_URL = "http://localhost:8002/route"
 MANCHESTER_ROUTES_PATH = "../ManchesterRoutes.json"
-OUTPUT_PATH = "frontend/public/data/ManchesterRoutesWithRoads.json"
+OUTPUT_PATH = "../ManchesterRoutesWithRoads.json"
 ROUTE_COLORS = ['#0891B2', '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#DC2626']
 
 
