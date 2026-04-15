@@ -1,24 +1,22 @@
-### Imports ###
+### --- Imports --- ###
+
 from app.data.AccessNode import AccessNode
 from app.data.GetAccessNodes import get_specific_stop_data
 import json
 import pickle
-import time
 
-### Constants ###
-SAVE_JSON = "ManchesterRoutes.json"
 
 ### --- File Extraction --- ###
 
 
-def get_bus_access_node_graph(city):
+def get_bus_access_node_graph(stop_json_filepath, route_json_filepath):
 
     ## -- Bus Stops -- ##
 
     # Array of bus-stop codes
     busCodes = []
 
-    with open(f"app/data_files/Datasets/{city}/AllBusStopData.json", "r") as f:
+    with open(stop_json_filepath, "r") as f:
         fileData = json.load(f)
 
         for file in fileData:
@@ -38,13 +36,20 @@ def get_bus_access_node_graph(city):
 
     # List of consecutive routes :
     routesList = []
-    with open(f"app/data_files/Datasets/{city}/AllRoutesData.json", "r") as g:
+    with open(route_json_filepath, "r") as g:
 
         fileData = json.load(g)
 
+        first_file = True
         for file in fileData:
             routesList.append(file)
 
+            if first_file == False:
+                for prev_route in routesList[:-1]:
+                    if routesList[-1] == prev_route:
+                        routesList.remove(prev_route)
+                        
+            first_file = False
             # break # Uncomment to only view 1st file bus routes
 
     ## -- Populating AccessNode Graph -- ##
@@ -81,65 +86,6 @@ def get_bus_access_node_graph(city):
 
 
 ### Main ###
-def get_bus_route_json(city):
-
-    busStops = []
-    with open(f"app/data_files/Datasets/{city}/AllBusStopData.json", "r") as f:
-        fileData = json.load(f)
-
-        # Add each bus stop as a dictionary for cross join
-        for row in fileData:
-            for busStop in row:
-                # Assign each bus stop to JSON dictionary
-                busStopDict = {}
-                busStopDict["ATCOCode"] = busStop["StopPointRef"]
-                busStopDict["Latitude"] = busStop["Location"][1]
-
-                busStopDict["Longitude"] = busStop["Location"][0]
-
-                ## Assign bus stop to route
-                busStops.append(busStopDict)
-
-    # Create a lookup dictionary.
-    busStop_lookup = {stop["ATCOCode"]: stop for stop in busStops}
-
-    routes = []
-    route_signatures = set()  # Used to ensure there are no duplicates
-    with open(f"app/data_files/Datasets/{city}/AllRoutesData.json", "r") as f:
-        fileData = json.load(f)
-
-        # Add each route as a dictionary into routes array
-        i = 0
-        for route in fileData:
-            routeDict = {}
-            routeDict["RouteName"] = f"Pregenerated-{i}"
-            routeDict["Route"] = []
-            i += 1
-            for busStop in route:
-                # If ATCOCode already in route, break the loop as route is repeating.
-                if any(stop["ATCOCode"] == busStop["Start"] for stop in routeDict["Route"]):
-                    break
-
-                # Extract bus data from busStops array
-                extractedBusStop = busStop_lookup.get(busStop["Start"])
-                if extractedBusStop:
-                    routeDict["Route"].append(extractedBusStop)
-                else:
-                    pass
-
-            signature = tuple(stop["ATCOCode"] for stop in routeDict["Route"])
-
-            if signature not in route_signatures:
-                routes.append(routeDict)
-                route_signatures.add(signature)
-            else:
-                continue
-
-    # Save array of JSON routes as a JSON file
-    with open(SAVE_JSON, "w", encoding="utf-8") as f:
-        json.dump(routes, f)
-        print("Save Successful")
-
 
 if __name__ == "__main__":
     import sys
