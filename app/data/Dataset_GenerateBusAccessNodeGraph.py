@@ -11,7 +11,7 @@ SAVE_JSON = "ManchesterRoutes.json"
 ### --- File Extraction --- ###
 
 
-def get_bus_access_node_graph(stop_json_filepath, route_json_filepath):
+def get_bus_access_node_graph(stop_json_filepath, route_json):
 
     ## -- Bus Stops -- ##
 
@@ -38,21 +38,8 @@ def get_bus_access_node_graph(stop_json_filepath, route_json_filepath):
 
     # List of consecutive routes :
     routesList = []
-    with open(route_json_filepath, "r") as g:
-
-        fileData = json.load(g)
-
-        first_file = True
-        for file in fileData:
-            routesList.append(file)
-
-            if first_file == False:
-                for prev_route in routesList[:-1]:
-                    if routesList[-1] == prev_route:
-                        routesList.remove(prev_route)
-
-            first_file = False
-            # break # Uncomment to only view 1st file bus routes
+    for route in route_json:
+        routesList.append(route["Route"])
 
     ## -- Populating AccessNode Graph -- ##
 
@@ -71,17 +58,17 @@ def get_bus_access_node_graph(stop_json_filepath, route_json_filepath):
     for bus_route in routesList:
         bus_route_num += 1
 
-        for journey in bus_route:
+        for i in range(len(bus_route) - 1):  # Loop all but the last.
 
             # Consecutive bus stops (as ATCO codes)
-            start = journey["Start"]
-            end = journey["End"]
+            start = bus_route[i]
+            end = bus_route[i + 1]
 
             # ATCO Code -> AccessNode object
-            curNode = CodeToNode[start]
+            curNode = CodeToNode[start["ATCOCode"]]
 
             AccessNode.addNearbyStop(
-                curNode, (CodeToNode[end], "bus", bus_route_num)
+                curNode, (CodeToNode[end["ATCOCode"]], "bus", bus_route_num)
             )  # (Node, mode, route)
 
     return AccessNodeGraph
@@ -97,12 +84,12 @@ def get_bus_route_json(city, save=False, returnRoutes=True):
         returnRoutes (bool): If True, return the JSON structure.
 
     Returns:
-        routes (Dictionary):
-            [routeName : string,
-            route:
-                [ATCOCode : string,
+        routes (List):
+            [RouteName : string,
+             Route (List):
+                [{ATCOCode : string,
                 Longitude : float,
-                Latitude : float]]
+                Latitude : float}]
     """
 
     busStops = []
@@ -166,6 +153,49 @@ def get_bus_route_json(city, save=False, returnRoutes=True):
     # Return array of JSON routes.
     if returnRoutes:
         return routes
+
+
+def add_bus_route(routeJSON, routeName, route):
+    """
+    Adds a bus route to the routeJSON structure.
+
+    Args:
+        routeJSON (JSON): The JSON of routes to add to.
+        routeName (String): The name of the route.
+        route (List): List of dictionary objects that hold the route. Must be in the form:
+             Route (list):
+                [{ATCOCode : string,
+                Longitude : float,
+                Latitude : float}]
+    """
+    routeDict = {"RouteName": routeName, "Route": route}
+    routeJSON.append(routeDict)
+
+    return routeJSON
+
+
+def remove_bus_route(routeJSON, routeToRemove, outputResults=False):
+    """
+    Removes a specified route from the passed route JSON file.
+
+    Args:
+        routeJSON (JSON): The JSON of routes to remove from.
+        routeToRemove (String): The name of the route to remove.
+        outputResults (bool): If True, print out number of removed items.
+
+    Returns (JSON): The JSON of routes with the removed route.
+    """
+    removedCounter = 0
+    # Iterates over copy of list.
+    for route in routeJSON[:]:
+        if route["RouteName"] == routeToRemove:
+            routeJSON.remove(route)
+            removedCounter += 1
+
+    if outputResults:
+        print(f"Number of removed items: {removedCounter}")
+
+    return routeJSON
 
 
 if __name__ == "__main__":
