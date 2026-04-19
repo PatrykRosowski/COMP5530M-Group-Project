@@ -171,8 +171,7 @@ def get_bus_route_json(city, save=False, returnRoutes=True):
 if __name__ == "__main__":
     import sys
 
-    # sys.setrecursionlimit(100000)
-    # graph = get_bus_access_node_graph("Manchester")
-    # pickle.dump(graph, open("app/data_files/manchester_multimodal_graph.pkl", "wb"))
-    # print("File succeccfully run!")
-    print(get_bus_route_json("Manchester"))
+    sys.setrecursionlimit(100000)
+    graph = get_bus_access_node_graph("Manchester")
+    pickle.dump(graph, open("app/data_files/manchester_multimodal_graph.pkl", "wb"))
+    print("File succeccfully run!")
