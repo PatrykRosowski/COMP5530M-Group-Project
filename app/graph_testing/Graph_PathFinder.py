@@ -134,7 +134,7 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
 
         # Restrict passengers from consecutively walking (over 500m)
         # return float("inf")
-        return edge_weight * PunishmentMultiplyer["walk"]
+        return edge_weight * (PunishmentMultiplyer["walk"] ** 2)
 
     ## -- End of Function -- ##
 

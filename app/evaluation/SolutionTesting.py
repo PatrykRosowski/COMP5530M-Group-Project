@@ -18,6 +18,9 @@ from app.utils.heatmap_controller import get_heatmap_pairs
 from app.graph_testing.Graph_PathFinder import Shortest_Path_Simulation
 from app.evaluation.SolutionEvaluation import print_all_statistics
 from app.evaluation.SolutionEvaluation import sec_to_hmsms
+from app.evaluation.SolutionEvaluation import compare_graph_stats
+from app.evaluation.SolutionEvaluation import get_all_graph_statistics
+from app.evaluation.SolutionEvaluation import get_all_solution_statistics
 
 end_time = time.time()
 print(f"\n\nImports successfully processed in time {end_time-start_time:.2f} seconds.\n")
@@ -118,15 +121,179 @@ def plot_eval_solution(sol_array, name, city):
     gmap.draw(name)
 
 
+def evaluate_graph(graph, graph_name_string):
+
+    graph_stats_array = get_all_graph_statistics(graph)
+
+    graph_stats_json = {
+        'graph': graph_name_string,
+        # -- cannot use -- 'journeys_computed': len(oldg_solutions),
+        #'graph radius (minimum eccentricity)': f"{graph_stats_array[3]} nodes",
+        'graph diameter (maximum eccentricity)': f"{graph_stats_array[4]} nodes", # Used for MESP
+        #'vertex connectivity': f"{graph_stats_array[2]}", #:.2f
+        'maximum degree centrality': f"{graph_stats_array[0]:.6f}",
+        'number of nodes with 90%+ of max degree centrality': graph_stats_array[1],
+        # -- cannot use -- 'average travel time': f"{oldg_solution_stats_array[0]:.3f} seconds",
+        # -- cannot use -- 'average number of busses per journey': f"{oldg_solution_stats_array[1]:.1f} per trip",
+        # -- cannot use -- 'shortest journey time': f"{oldg_solution_stats_array[2]:.3f} seconds",
+        # -- cannot use -- 'average time of shortest 10% of journeys': f"{oldg_solution_stats_array[3]:.3f} seconds",
+        # -- cannot use -- 'longest journey time': f"{oldg_solution_stats_array[4]:.3f} seconds",
+        # -- cannot use -- 'average time of longest 10% of journeys': f"{oldg_solution_stats_array[5]:.3f} seconds"
+    }
+
+    return graph_stats_json
+
+
+def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_routes, new_network_json_routes, ):
+
+    old_graph = get_bus_access_node_graph(network_json_stops, old_network_json_routes)
+    new_graph = get_bus_access_node_graph(network_json_stops, new_network_json_routes)
+
+    oldg_graph_stats_array = get_all_graph_statistics(old_graph)#[:20]) # graph-based metrics
+    newg_graph_stats_array = get_all_graph_statistics(new_graph) # graph-based metrics
+
+    '''
+    for i in new_graph[590].Nearby:
+        print(i[0].ATCOCode, i[1:])
+    print()
+    for i in new_graph[591].Nearby:
+        print(i[0].ATCOCode, i[1:])
+    print()
+    for i in new_graph[592].Nearby:
+        print(i[0].ATCOCode, i[1:])
+    print()
+    for i in new_graph[793].Nearby:
+        print(i[0].ATCOCode, i[1:])
+    print()
+    for i in new_graph[1669].Nearby:
+        print(i[0].ATCOCode, i[1:])
+    print()
+    '''
+
+    heatmap_points = get_heatmap_pairs(num_of_HM_pairs)
+
+    testing_points = [[],[]]
+    old_graph, testing_points[0] = add_heatmap_points_to_graph(old_graph, heatmap_points)
+    new_graph, testing_points[1] = add_heatmap_points_to_graph(new_graph, heatmap_points)
+
+    old_graph = add_walking_paths(old_graph)
+    new_graph = add_walking_paths(new_graph)
+
+    oldg_edge_weight_dict, newg_edge_weight_dict = {}, {}
+
+    oldg_solutions, newg_solutions = {}, {} # solution path, weight, cost
+
+    index = 0
+    for point in range(len(testing_points[0])):
+
+        oldg_pair = testing_points[0][point]
+        newg_pair = testing_points[1][point]
+        index += 1
+        
+        o_solution_path, o_total_weight, o_total_cost = Shortest_Path_Simulation(
+            old_graph, oldg_pair[0], oldg_pair[1], oldg_edge_weight_dict
+        )
+
+        n_solution_path, n_total_weight, n_total_cost = Shortest_Path_Simulation(
+            new_graph, newg_pair[0], newg_pair[1], newg_edge_weight_dict
+        )
+
+        oldg_solutions[index] = (o_solution_path, o_total_weight, o_total_cost)
+        newg_solutions[index] = (n_solution_path, n_total_weight, n_total_cost)
+
+        #my_print(str(index) + ".. ")
+
+    compare_array = compare_graph_stats(oldg_solutions, newg_solutions, min(len(testing_points[0]),len(testing_points[1])))
+
+    # Printing Solutions :
+    # count = 0
+    # for i in oldg_solutions:
+    #     count+=1
+    #     print(f"File {count}: weight = {oldg_solutions[i][1]:.2f}, path-cost = {oldg_solutions[i][2]:.4f}")
+    # print()
+    # count = 0
+    # for j in newg_solutions:
+    #     count+=1
+    #     print(f"File {count}: weight = {newg_solutions[j][1]:.2f}, path-cost = {newg_solutions[j][2]:.4f}")
+    # print()
+
+    oldg_delete = [journey for journey in oldg_solutions if oldg_solutions[journey][1] == float('inf') or oldg_solutions[journey][1] == 0]
+    for journey in oldg_delete:
+        del oldg_solutions[journey]
+    
+    newg_delete = [journey for journey in newg_solutions if newg_solutions[journey][1] == float('inf') or newg_solutions[journey][1] == 0]
+    for journey in newg_delete:
+        del newg_solutions[journey]
+
+    oldg_solution_stats_array = get_all_solution_statistics(oldg_solutions) # solution-based metrics
+    newg_solution_stats_array = get_all_solution_statistics(newg_solutions) # solution-based metrics
+
+    old_graph_stats_json = {
+        'graph': 'Existing Bus Network',
+        'journeys_computed': len(oldg_solutions),
+        #'graph radius (minimum eccentricity)': f"{oldg_graph_stats_array[3]} nodes",
+        'graph diameter (maximum eccentricity)': f"{oldg_graph_stats_array[4]} nodes",
+        #'vertex connectivity': f"{oldg_graph_stats_array[2]}", #:.2f
+        'maximum degree centrality': f"{oldg_graph_stats_array[0]:.6f}",
+        'number of nodes with 90%+ of max degree centrality': oldg_graph_stats_array[1],
+        'average travel time': f"{oldg_solution_stats_array[0]:.3f} seconds",
+        'average number of busses per journey': f"{oldg_solution_stats_array[1]:.1f} per trip",
+        'shortest journey time': f"{oldg_solution_stats_array[2]:.3f} seconds",
+        'average time of shortest 10% of journeys': f"{oldg_solution_stats_array[3]:.3f} seconds",
+        'longest journey time': f"{oldg_solution_stats_array[4]:.3f} seconds",
+        'average time of longest 10% of journeys': f"{oldg_solution_stats_array[5]:.3f} seconds"
+    }
+    
+    new_graph_stats_json = {
+        'graph': 'Newly Proposed Bus Network',
+        'journeys_computed': len(newg_solutions),
+        #'graph radius (minimum eccentricity)': f"{newg_graph_stats_array[3]} nodes",
+        'graph diameter (maximum eccentricity)': f"{newg_graph_stats_array[4]} nodes",
+        #'vertex connectivity': f"{newg_graph_stats_array[2]}", #:.2f
+        'maximum degree centrality': f"{newg_graph_stats_array[0]:.6f}",
+        'number of nodes with 90%+ of max degree centrality': newg_graph_stats_array[1],
+        'average travel time': f"{newg_solution_stats_array[0]:.3f} seconds",
+        'average number of busses per journey': f"{newg_solution_stats_array[1]:.1f} per trip",
+        'shortest journey time': f"{newg_solution_stats_array[2]:.3f} seconds",
+        'average time of shortest 10% of journeys': f"{newg_solution_stats_array[3]:.3f} seconds",
+        'longest journey time': f"{newg_solution_stats_array[4]:.3f} seconds",
+        'average time of longest 10% of journeys': f"{newg_solution_stats_array[5]:.3f} seconds"
+    }
+
+    total_journeys = sum(compare_array)
+    comparing_stats_json = {
+        'total journeys computed': total_journeys,
+        'number of better journeys in old network': compare_array[0],
+        'percentage better journeys in old network': f"{((compare_array[0]/total_journeys)*100):.2f}%",
+        'number of better journeys in new network': compare_array[1],
+        'number of better journeys in new network': f"{((compare_array[1]/total_journeys)*100):.2f}%",
+        'number of equally efficient journies': compare_array[2],
+        'number of journeys with same efficiency': f"{((compare_array[2]/total_journeys)*100):.2f}%",
+    }
+
+    output_json = {"old_graph_stats": old_graph_stats_json, "new_graph_stats": new_graph_stats_json, "comparing_stats": comparing_stats_json}
+    
+    # Printing json output :
+    for i in output_json:
+        print(f"\n\x7B\n{i} :")
+        for j in output_json[i]:
+            print(f"\t\x7B {j}: {output_json[i][j]} \x7D")
+        print("}")
+    
+    return output_json
+
+
+
 ## -- Main -- ##
 
+'''
 if __name__ == "__main__":
 
 
     ## -- Initialisation -- ##
 
     # Number of (start, end) pairs
-    NUM_START_END_PAIRS = 15
+    NUM_START_END_PAIRS = 20
 
     dir = "app/evaluation/solutions"
     if os.path.exists(dir):
@@ -143,7 +310,10 @@ if __name__ == "__main__":
 
     # Existing bus graph -
     start = time.time()
-    graph = get_bus_access_node_graph("Manchester")  # Obtains all bus vertices
+    graph = get_bus_access_node_graph(
+        "app/data_files/Datasets/Manchester/AllBusStopData.json",
+        "app/data_files/Datasets/Manchester/AllRoutesData.json"
+    )  # Obtains all bus vertices
     # graph = pickle.load(open("app/data_files/manchester_multimodal_graph.pkl", "rb"))
     end = time.time()
     print(f"Bus graph generated in time {end-start:.2f} seconds.\n")
@@ -160,9 +330,7 @@ if __name__ == "__main__":
     print(f"Heatmap co-ordinates obtained in time {end-start:.2f} seconds.\n")
 
     start = time.time()
-    graph, testing_points = add_heatmap_points_to_graph(
-        graph, heatmap_points
-    )  # Adds heatmap points as AccessNodes
+    graph, testing_points = add_heatmap_points_to_graph(graph, heatmap_points)  # Adds heatmap points as AccessNodes
     end = time.time()
     print(f"Heatmap points added in time {end-start:.2f} seconds.\n")
 
@@ -174,11 +342,10 @@ if __name__ == "__main__":
     end = time.time()
     print(f"Walking paths generated in time {end-start:.2f} seconds.\n")
 
+
     # Displaying graph :
     plot_in_gmplot(graph, "app/evaluation/solutions/graph_with_hm_points.html")
-    print(
-        "Full map of bus stops and heatmap points connected by bus routes and walking paths generated in app/evaluation/solutions.\n"
-    )
+    print("Full map of bus stops and heatmap points connected by bus routes and walking paths generated in app/evaluation/solutions.\n")
 
 
     ## -- Running (custom) A* and Storing Output Data -- ##
@@ -205,9 +372,7 @@ if __name__ == "__main__":
         etime = time.time()
         time_arr.append(f"{etime-stime:.2f}")
     end = time.time()
-    print(
-        f"\nTesting complete (for {NUM_START_END_PAIRS} journeys) in time {end-start:.2f} seconds.\n"
-    )
+    print(f"\nTesting complete (for {NUM_START_END_PAIRS} journeys) in time {end-start:.2f} seconds.\n")
     print(f"Timings for each file: {time_arr}\n")
 
 
@@ -218,9 +383,7 @@ if __name__ == "__main__":
     num_of_inf = 0
     for i in solution_stats:
         count += 1
-        print(
-            f"File {count}: weight = {solution_stats[i][1]:.2f}, path-cost = {solution_stats[i][2]:.4f}"
-        )
+        # print(f"File {count}: weight = {solution_stats[i][1]:.2f}, path-cost = {solution_stats[i][2]:.4f}")
         if solution_stats[i][1] == float("inf"):
             num_of_inf += 1
     print(f"\nNumber of failed journeys = {num_of_inf}/{NUM_START_END_PAIRS}")
@@ -243,22 +406,29 @@ if __name__ == "__main__":
                 "Manchester",
             )
         except:
-            print(f"Exception occured, couldn't generate for file {count}")
+            # print(f"Exception occured, couldn't generate for file {count}")
+            pass
 
 
     ## -- Outputting Solution Statistics -- ##
 
-    #'''
-    filtered_solution_stats = {}
-    for i in solution_stats:
-        if solution_stats[i][1] != float('inf'):
-            filtered_solution_stats[i] = solution_stats[i] #{i: solution_stats[i] for i in solution_stats.keys() and solution_stats[i][1] != float('inf')}
-    print_all_statistics(filtered_solution_stats, "'Existing Bus Network'")
-    # Space for printing stats of proposed bus network
-    #'''
+
+    # filtered_solution_stats = {}
+    # print(f"Ignoring files: ", end = '')
+    # for i in solution_stats:
+    #     if solution_stats[i][1] != float('inf') and solution_stats[i][1] != 0:
+    #         filtered_solution_stats[i] = solution_stats[i] #{i: solution_stats[i] for i in solution_stats.keys() and solution_stats[i][1] != float('inf')}
+    #     else:
+    #         print(f"{i} ", end = '')
+    
+    # print_all_statistics(filtered_solution_stats, "'Existing Bus Network'")
+    # # Space for printing stats of proposed bus network
+
 
     ## -- End of script -- ##
+#'''
 
+run_full_evaluation(30, "app/data_files/Datasets/Manchester/AllBusStopData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json")
 
 # Runtime of entire script
 end_time = time.time()
