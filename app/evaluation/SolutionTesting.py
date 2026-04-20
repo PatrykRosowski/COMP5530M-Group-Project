@@ -127,18 +127,21 @@ def evaluate_graph(graph, graph_name_string):
 
     graph_stats_json = {
         'graph': graph_name_string,
+        'number of vertices': graph_stats_array[4],
+        'number of edges': graph_stats_array[5],
+        'average degree (number of busses passing through stop)': graph_stats_array[6],
         # -- cannot use -- 'journeys_computed': len(oldg_solutions),
-        #'graph radius (minimum eccentricity)': f"{graph_stats_array[3]} nodes",
-        'graph diameter (maximum eccentricity)': f"{graph_stats_array[4]} nodes", # Used for MESP
-        #'vertex connectivity': f"{graph_stats_array[2]}", #:.2f
+        #'graph radius (minimum eccentricity)': f"{graph_stats_array[2]} nodes",
+        'graph diameter (maximum eccentricity)': f"{graph_stats_array[3]} nodes", # Used for MESP
         'maximum degree centrality': f"{graph_stats_array[0]:.6f}",
         'number of nodes with 90%+ of max degree centrality': graph_stats_array[1],
-        # -- cannot use -- 'average travel time': f"{oldg_solution_stats_array[0]:.3f} seconds",
-        # -- cannot use -- 'average number of busses per journey': f"{oldg_solution_stats_array[1]:.1f} per trip",
-        # -- cannot use -- 'shortest journey time': f"{oldg_solution_stats_array[2]:.3f} seconds",
-        # -- cannot use -- 'average time of shortest 10% of journeys': f"{oldg_solution_stats_array[3]:.3f} seconds",
-        # -- cannot use -- 'longest journey time': f"{oldg_solution_stats_array[4]:.3f} seconds",
-        # -- cannot use -- 'average time of longest 10% of journeys': f"{oldg_solution_stats_array[5]:.3f} seconds"
+        # -- cannot use -- 'mean travel time': f"{oldg_solution_stats_array[0]:.3f} seconds",
+        # -- cannot use -- 'median travel time': f"{oldg_solution_stats_array[1]:.3f} seconds",
+        # -- cannot use -- 'average number of busses per journey': f"{oldg_solution_stats_array[2]:.1f} per trip",
+        # -- cannot use -- 'shortest journey time': f"{oldg_solution_stats_array[3]:.3f} seconds",
+        # -- cannot use -- 'average time of shortest 10% of journeys': f"{oldg_solution_stats_array[4]:.3f} seconds",
+        # -- cannot use -- 'longest journey time': f"{oldg_solution_stats_array[5]:.3f} seconds",
+        # -- cannot use -- 'average time of longest 10% of journeys': f"{oldg_solution_stats_array[6]:.3f} seconds"
     }
 
     return graph_stats_json
@@ -149,8 +152,8 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
     old_graph = get_bus_access_node_graph(network_json_stops, old_network_json_routes)
     new_graph = get_bus_access_node_graph(network_json_stops, new_network_json_routes)
 
-    oldg_graph_stats_array = get_all_graph_statistics(old_graph)#[:20]) # graph-based metrics
-    newg_graph_stats_array = get_all_graph_statistics(new_graph) # graph-based metrics
+    oldg_graph_stats_array = get_all_graph_statistics(old_graph[:20]) # graph-based metrics
+    newg_graph_stats_array = get_all_graph_statistics(new_graph[:50]) # graph-based metrics
 
     '''
     for i in new_graph[590].Nearby:
@@ -230,34 +233,40 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
 
     old_graph_stats_json = {
         'graph': 'Existing Bus Network',
+        'number of vertices': oldg_graph_stats_array[4],
+        'number of edges': oldg_graph_stats_array[5],
+        'average degree (number of busses passing through stop)': oldg_graph_stats_array[6],
         'journeys_computed': len(oldg_solutions),
-        #'graph radius (minimum eccentricity)': f"{oldg_graph_stats_array[3]} nodes",
-        'graph diameter (maximum eccentricity)': f"{oldg_graph_stats_array[4]} nodes",
-        #'vertex connectivity': f"{oldg_graph_stats_array[2]}", #:.2f
+        #'graph radius (minimum eccentricity)': f"{oldg_graph_stats_array[2]} nodes",
+        'graph diameter (maximum eccentricity)': f"{oldg_graph_stats_array[3]} nodes",
         'maximum degree centrality': f"{oldg_graph_stats_array[0]:.6f}",
         'number of nodes with 90%+ of max degree centrality': oldg_graph_stats_array[1],
-        'average travel time': f"{oldg_solution_stats_array[0]:.3f} seconds",
-        'average number of busses per journey': f"{oldg_solution_stats_array[1]:.1f} per trip",
-        'shortest journey time': f"{oldg_solution_stats_array[2]:.3f} seconds",
-        'average time of shortest 10% of journeys': f"{oldg_solution_stats_array[3]:.3f} seconds",
-        'longest journey time': f"{oldg_solution_stats_array[4]:.3f} seconds",
-        'average time of longest 10% of journeys': f"{oldg_solution_stats_array[5]:.3f} seconds"
+        'mean travel time': f"{oldg_solution_stats_array[0]:.3f} seconds",
+        'median travel time': f"{oldg_solution_stats_array[1]:.3f} seconds",
+        'average number of busses per journey': f"{oldg_solution_stats_array[2]:.1f} per trip",
+        'shortest journey time': f"{oldg_solution_stats_array[3]:.3f} seconds",
+        'average time of shortest 10% of journeys': f"{oldg_solution_stats_array[4]:.3f} seconds",
+        'longest journey time': f"{oldg_solution_stats_array[5]:.3f} seconds",
+        'average time of longest 10% of journeys': f"{oldg_solution_stats_array[6]:.3f} seconds"
     }
     
     new_graph_stats_json = {
         'graph': 'Newly Proposed Bus Network',
+        'number of vertices': newg_graph_stats_array[4],
+        'number of edges': newg_graph_stats_array[5],
+        'average degree (number of busses passing through stop)': newg_graph_stats_array[6],
         'journeys_computed': len(newg_solutions),
-        #'graph radius (minimum eccentricity)': f"{newg_graph_stats_array[3]} nodes",
-        'graph diameter (maximum eccentricity)': f"{newg_graph_stats_array[4]} nodes",
-        #'vertex connectivity': f"{newg_graph_stats_array[2]}", #:.2f
+        #'graph radius (minimum eccentricity)': f"{newg_graph_stats_array[2]} nodes",
+        'graph diameter (maximum eccentricity)': f"{newg_graph_stats_array[3]} nodes",
         'maximum degree centrality': f"{newg_graph_stats_array[0]:.6f}",
         'number of nodes with 90%+ of max degree centrality': newg_graph_stats_array[1],
-        'average travel time': f"{newg_solution_stats_array[0]:.3f} seconds",
-        'average number of busses per journey': f"{newg_solution_stats_array[1]:.1f} per trip",
-        'shortest journey time': f"{newg_solution_stats_array[2]:.3f} seconds",
-        'average time of shortest 10% of journeys': f"{newg_solution_stats_array[3]:.3f} seconds",
-        'longest journey time': f"{newg_solution_stats_array[4]:.3f} seconds",
-        'average time of longest 10% of journeys': f"{newg_solution_stats_array[5]:.3f} seconds"
+        'mean travel time': f"{newg_solution_stats_array[0]:.3f} seconds",
+        'median travel time': f"{newg_solution_stats_array[1]:.3f} seconds",
+        'average number of busses per journey': f"{newg_solution_stats_array[2]:.1f} per trip",
+        'shortest journey time': f"{newg_solution_stats_array[3]:.3f} seconds",
+        'average time of shortest 10% of journeys': f"{newg_solution_stats_array[4]:.3f} seconds",
+        'longest journey time': f"{newg_solution_stats_array[5]:.3f} seconds",
+        'average time of longest 10% of journeys': f"{newg_solution_stats_array[6]:.3f} seconds"
     }
 
     total_journeys = sum(compare_array)
@@ -428,7 +437,7 @@ if __name__ == "__main__":
     ## -- End of script -- ##
 #'''
 
-run_full_evaluation(30, "app/data_files/Datasets/Manchester/AllBusStopData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json")
+run_full_evaluation(3, "app/data_files/Datasets/Manchester/AllBusStopData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json")
 
 # Runtime of entire script
 end_time = time.time()
