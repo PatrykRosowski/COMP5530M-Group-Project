@@ -12,6 +12,9 @@ start_time = time.time()
 
 from app.data.AccessNode import AccessNode
 from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_access_node_graph
+from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_route_json
+from app.data.Dataset_GenerateBusAccessNodeGraph import remove_bus_route
+from app.data.Dataset_GenerateBusAccessNodeGraph import add_bus_route
 from app.data.Dataset_GenerateWalkingPaths import add_walking_paths
 from app.data.Dataset_MapBusAccessNodeGraph import plot_in_gmplot
 from app.utils.heatmap_controller import get_heatmap_pairs
@@ -74,11 +77,21 @@ def plot_eval_solution(sol_array, name, city):
 
     # sol_array[i] = (parent_node, edge_weight_travelled, mode_of_travel)
     full_colours = list(COLOURS.keys())
-    colours = ["blue", "orange", "green", "red", "purple", "yellow", "pink", "brown", "white"] #, "cyan", "lime", "navy", "gold", "maroon"]
+    colours = [
+        "blue",
+        "orange",
+        "green",
+        "red",
+        "purple",
+        "yellow",
+        "pink",
+        "brown",
+        "white",
+    ]  # , "cyan", "lime", "navy", "gold", "maroon"]
     for col in full_colours:
         if col not in colours:
             colours.append(col)
-    
+
     used_routes = []
     if city == "Harrogate":
         gmap = gmplot.GoogleMapPlotter(54.05, -1.42, 12)
@@ -147,17 +160,22 @@ def evaluate_graph(graph, graph_name_string):
     return graph_stats_json
 
 
-def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_routes, new_network_json_routes, ):
+def run_full_evaluation(
+    num_of_HM_pairs,
+    network_json_stops,
+    old_network_json_routes,
+    new_network_json_routes,
+):
 
     old_graph = get_bus_access_node_graph(network_json_stops, old_network_json_routes)
     new_graph = get_bus_access_node_graph(network_json_stops, new_network_json_routes)
 
-    oldg_graph_stats_array = get_all_graph_statistics(old_graph[:20]) # graph-based metrics
-    newg_graph_stats_array = get_all_graph_statistics(new_graph) # graph-based metrics
+    oldg_graph_stats_array = get_all_graph_statistics(old_graph)  # [:20]) # graph-based metrics
+    newg_graph_stats_array = get_all_graph_statistics(new_graph)  # graph-based metrics
 
     heatmap_points = get_heatmap_pairs(num_of_HM_pairs)
 
-    testing_points = [[],[]]
+    testing_points = [[], []]
     old_graph, testing_points[0] = add_heatmap_points_to_graph(old_graph, heatmap_points)
     new_graph, testing_points[1] = add_heatmap_points_to_graph(new_graph, heatmap_points)
 
@@ -166,7 +184,7 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
 
     oldg_edge_weight_dict, newg_edge_weight_dict = {}, {}
 
-    oldg_solutions, newg_solutions = {}, {} # solution path, weight, cost
+    oldg_solutions, newg_solutions = {}, {}  # solution path, weight, cost
 
     index = 0
     for point in range(len(testing_points[0])):
@@ -174,7 +192,7 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
         oldg_pair = testing_points[0][point]
         newg_pair = testing_points[1][point]
         index += 1
-        
+
         o_solution_path, o_total_weight, o_total_cost = Shortest_Path_Simulation(
             old_graph, oldg_pair[0], oldg_pair[1], oldg_edge_weight_dict
         )
@@ -186,9 +204,11 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
         oldg_solutions[index] = (o_solution_path, o_total_weight, o_total_cost)
         newg_solutions[index] = (n_solution_path, n_total_weight, n_total_cost)
 
-        #my_print(str(index) + ".. ")
+        # my_print(str(index) + ".. ")
 
-    compare_array = compare_graph_stats(oldg_solutions, newg_solutions, min(len(testing_points[0]),len(testing_points[1])))
+    compare_array = compare_graph_stats(
+        oldg_solutions, newg_solutions, min(len(testing_points[0]), len(testing_points[1]))
+    )
 
     # Printing Solutions :
     # count = 0
@@ -202,16 +222,28 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
     #     print(f"File {count}: weight = {newg_solutions[j][1]:.2f}, path-cost = {newg_solutions[j][2]:.4f}")
     # print()
 
-    oldg_delete = [journey for journey in oldg_solutions if oldg_solutions[journey][1] == float('inf') or oldg_solutions[journey][1] == 0]
+    oldg_delete = [
+        journey
+        for journey in oldg_solutions
+        if oldg_solutions[journey][1] == float("inf") or oldg_solutions[journey][1] == 0
+    ]
     for journey in oldg_delete:
         del oldg_solutions[journey]
-    
-    newg_delete = [journey for journey in newg_solutions if newg_solutions[journey][1] == float('inf') or newg_solutions[journey][1] == 0]
+
+    newg_delete = [
+        journey
+        for journey in newg_solutions
+        if newg_solutions[journey][1] == float("inf") or newg_solutions[journey][1] == 0
+    ]
     for journey in newg_delete:
         del newg_solutions[journey]
 
-    oldg_solution_stats_array = get_all_solution_statistics(oldg_solutions) # solution-based metrics
-    newg_solution_stats_array = get_all_solution_statistics(newg_solutions) # solution-based metrics
+    oldg_solution_stats_array = get_all_solution_statistics(
+        oldg_solutions
+    )  # solution-based metrics
+    newg_solution_stats_array = get_all_solution_statistics(
+        newg_solutions
+    )  # solution-based metrics
 
     old_graph_stats_json = {
         'graph name': str('"')+'Existing Bus Network'+str('"'),
@@ -231,7 +263,7 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
         'longest journey time': f"{oldg_solution_stats_array[5]:,.3f} seconds",
         'average time of longest 10% of journeys': f"{oldg_solution_stats_array[6]:,.3f} seconds"
     }
-    
+
     new_graph_stats_json = {
         'graph name': str('"')+'Newly Proposed Bus Network'+str('"'),
         'number of vertices': f"{newg_graph_stats_array[4]:,}",
@@ -253,31 +285,34 @@ def run_full_evaluation(num_of_HM_pairs, network_json_stops, old_network_json_ro
 
     total_journeys = sum(compare_array)
     comparing_stats_json = {
-        'total journeys computed': total_journeys,
-        'number of better journeys in old network': compare_array[0],
-        'percentage better journeys in old network': f"{((compare_array[0]/total_journeys)*100):.2f}%",
-        'number of better journeys in new network': compare_array[1],
-        'number of better journeys in new network': f"{((compare_array[1]/total_journeys)*100):.2f}%",
-        'number of equally efficient journies': compare_array[2],
-        'number of journeys with same efficiency': f"{((compare_array[2]/total_journeys)*100):.2f}%",
+        "total journeys computed": total_journeys,
+        "number of better journeys in old network": compare_array[0],
+        "percentage better journeys in old network": f"{((compare_array[0]/total_journeys)*100):.2f}%",
+        "number of better journeys in new network": compare_array[1],
+        "number of better journeys in new network": f"{((compare_array[1]/total_journeys)*100):.2f}%",
+        "number of equally efficient journies": compare_array[2],
+        "number of journeys with same efficiency": f"{((compare_array[2]/total_journeys)*100):.2f}%",
     }
 
-    output_json = {"old_graph_stats": old_graph_stats_json, "new_graph_stats": new_graph_stats_json, "comparing_stats": comparing_stats_json}
-    
+    output_json = {
+        "old_graph_stats": old_graph_stats_json,
+        "new_graph_stats": new_graph_stats_json,
+        "comparing_stats": comparing_stats_json,
+    }
+
     # Printing json output :
     for i in output_json:
-        print(f"\n\x7B\n{i} :")
+        print(f"\n\x7b\n{i} :")
         for j in output_json[i]:
-            print(f"\t\x7B {j}: {output_json[i][j]} \x7D")
+            print(f"\t\x7b {j}: {output_json[i][j]} \x7d")
         print("}")
-    
-    return output_json
 
+    return output_json
 
 
 ## -- Main -- ##
 
-'''
+"""
 if __name__ == "__main__":
 
 
@@ -417,9 +452,17 @@ if __name__ == "__main__":
 
 
     ## -- End of script -- ##
-#'''
+#"""
 
-run_full_evaluation(3, "app/data_files/Datasets/Manchester/AllBusStopData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json", "app/data_files/Datasets/Manchester/AllRoutesData.json")
+manchesterRoutesOriginal = get_bus_route_json("Manchester")  # Get original bus routes.
+manchesterRoutesEdited = get_bus_route_json("Manchester")  # Edit original bus routes.
+manchesterRoutesEdited = remove_bus_route(manchesterRoutesEdited, "Pregenerated-0")
+run_full_evaluation(
+    30,
+    "app/data_files/Datasets/Manchester/AllBusStopData.json",
+    manchesterRoutesOriginal,
+    manchesterRoutesEdited,
+)
 
 # Runtime of entire script
 end_time = time.time()
