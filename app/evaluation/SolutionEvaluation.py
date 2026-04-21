@@ -68,7 +68,7 @@ def sec_to_hmsms(seconds):
     return f"{h}h {m}m {s}s {ms:.1f}ms"
 
 
-def mean_travel_time(solution_stats_arr):
+def average_travel_time(solution_stats_arr):
 
     edgeweight_array = [solution_stats_arr[i][1] for i in solution_stats_arr]
 
@@ -83,7 +83,16 @@ def mean_travel_time(solution_stats_arr):
         total_tt += weight
 
     mean_tt = total_tt / num_paths
-    return mean_tt # :.3f
+    
+    edgeweight_array.sort()
+    if num_paths%2 == 1:
+        median_tt = edgeweight_array[ num_paths//2 + 1 ]
+    else:
+        w1 = edgeweight_array[ num_paths//2 ]
+        w2 = edgeweight_array[ num_paths//2 + 1 ]
+        median_tt = (w1 + w2)/2
+
+    return mean_tt, median_tt # :.3f
 
 
 def number_of_busses_taken(modeInfo_array):
@@ -167,6 +176,28 @@ def compare_graph_stats(old_solutions, new_solutions, len_test_points):
     return compare_array # list(int, int, int)
 
 
+def vertices_and_edges(graph, nx_bool = False):
+
+    '''
+    if nx_bool == False:
+        G = AccessNode_to_NetworkX(graph)
+    else:
+        G = graph
+
+    num_vertices = G.number_of_nodes()
+    num_edges = G.number_of_edges()
+
+    print(num_vertices, num_edges)
+    '''
+
+    edge_count = 0
+    for node in graph:
+        edge_count += len(node.Nearby)
+    #print(len(graph), edge_count)
+
+    return len(graph), edge_count
+
+
 def average_degree(graph):
 
     degree_sum = 0
@@ -209,7 +240,6 @@ def vertex_connectivity(graph, nx_bool = False):
         G = graph
     
     return nx.edge_connectivity(G)
-
 
 
 def get_dict_max(dic):
@@ -256,28 +286,32 @@ def get_all_graph_statistics(graph, nx_bool = False):
 
     max_degree_centrality, num_highest_degree_centrality = degree_centrality(graph, False)
 
-    connectivity_num = vertex_connectivity(graph, False)
+    # connectivity_num = vertex_connectivity(graph, False)
 
     radius, diameter = eccentricity(graph, False)
 
-    return max_degree_centrality, num_highest_degree_centrality, connectivity_num, radius, diameter
+    nodes, edges = vertices_and_edges(graph, False)
+
+    avg_degree = average_degree(graph)
+
+    return max_degree_centrality, num_highest_degree_centrality, radius, diameter, nodes, edges, avg_degree
 
 
     
 def get_all_solution_statistics(solution_stats_arr):
     
-    avg_travel_time = mean_travel_time(solution_stats_arr)
+    mean_travel_time, median_travel_time = average_travel_time(solution_stats_arr)
 
     avg_busses_taken = mean_busses_taken(solution_stats_arr)
 
     best_time, best_avg, worst_time, worst_avg = best_and_worst_avg_travel_time(solution_stats_arr)
 
-    return avg_travel_time, avg_busses_taken, best_time, best_avg, worst_time, worst_avg
+    return mean_travel_time, median_travel_time, avg_busses_taken, best_time, best_avg, worst_time, worst_avg
 
 
 def print_all_statistics(solution_stats_arr, graph_type = ""):
 
-    avg_travel_time = mean_travel_time(solution_stats_arr)
+    mean_travel_time, median_travel_time = average_travel_time(solution_stats_arr)
 
     avg_busses_taken = mean_busses_taken(solution_stats_arr)
 
@@ -286,7 +320,7 @@ def print_all_statistics(solution_stats_arr, graph_type = ""):
     graph_type_str = "FOR GRAPH " + graph_type
     print(f"\n\nSTATISTICS of the PATHS COMPUTED for {len(solution_stats_arr)} JOURNEYS {graph_type_str}:\n")
 
-    print(f"-> Average travel time among all journeys = {sec_to_hmsms(avg_travel_time)} [{avg_travel_time:.3f} seconds]")
+    print(f"-> Average travel time among all journeys = {sec_to_hmsms(mean_travel_time)} [{mean_travel_time:.3f} seconds]")
     print(f"-> Average number of busses for a journey = {avg_busses_taken:.1f} busses per journey\n")
 
     print(f"-> Best Case Analysis -")
