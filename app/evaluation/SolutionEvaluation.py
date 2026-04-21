@@ -178,6 +178,7 @@ def compare_graph_stats(old_solutions, new_solutions, len_test_points):
 
 def vertices_and_edges(graph, nx_bool = False):
 
+    '''
     if nx_bool == False:
         G = AccessNode_to_NetworkX(graph)
     else:
@@ -186,7 +187,15 @@ def vertices_and_edges(graph, nx_bool = False):
     num_vertices = G.number_of_nodes()
     num_edges = G.number_of_edges()
 
-    return num_vertices, num_edges
+    print(num_vertices, num_edges)
+    '''
+
+    edge_count = 0
+    for node in graph:
+        edge_count += len(node.Nearby)
+    #print(len(graph), edge_count)
+
+    return len(graph), edge_count
 
 
 def average_degree(graph):
@@ -231,7 +240,6 @@ def vertex_connectivity(graph, nx_bool = False):
         G = graph
     
     return nx.edge_connectivity(G)
-
 
 
 def get_dict_max(dic):
