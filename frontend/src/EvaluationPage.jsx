@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
+import { useLocation } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 
 import NavBar from './Navbar';
+
+const ROUTE_COLORS = ['#0891B2', '#2563EB', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#DC2626'];
 
 const MapResizer = () => {
   const map = useMap();
@@ -64,15 +67,14 @@ const StatCard = ({ label, value, icon, accent = false, trendUp, isLoading }) =>
         </p>
       )}
     </div>
-    {trendUp !== undefined && !isLoading && (
-      <div className={`p-2 rounded-lg ${trendUp ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-500'}`}>
-        {trendUp ? <TrendUpIcon /> : <TrendDownIcon />}
-      </div>
-    )}
+
   </div>
 );
 
 const EvaluationPage = () => {
+  const location = useLocation();
+  const activeRoutes = location.state?.activeRoutes || [];
+
   const [stats, setStats] = useState({
     averageTime: null,
     averageNumBus: null,
@@ -88,7 +90,14 @@ const EvaluationPage = () => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/evaluation-stats');
+        // Using stringify on activeRoutes to send to backend
+        const response = await fetch('http://127.0.0.1:5000/api/evaluation-stats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ activeRoutes }),
+        });
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         setStats({
@@ -115,7 +124,7 @@ const EvaluationPage = () => {
       }
     };
     fetchStats();
-  }, []);
+  }, [activeRoutes]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#E2E8F0]">
@@ -131,6 +140,17 @@ const EvaluationPage = () => {
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         <MapResizer />
+        {activeRoutes.filter(r => r.visible).map((route, index) => (
+          <Polyline
+            key={`eval-route-${route.id}`}
+            positions={route.coordinates}
+            pathOptions={{
+              color: ROUTE_COLORS[index % ROUTE_COLORS.length],
+              weight: 5,
+              opacity: 0.85,
+            }}
+          />
+        ))}
       </MapContainer>
 
       <div className="absolute bottom-0 left-0 right-0 z-10 sm:absolute sm:top-[calc(5rem+1rem)] sm:right-5 sm:bottom-auto sm:w-80 p-4 sm:p-0 ml-5">

@@ -454,16 +454,17 @@ if __name__ == "__main__":
     ## -- End of script -- ##
 #"""
 
-manchesterRoutesOriginal = get_bus_route_json("Manchester")  # Get original bus routes.
-manchesterRoutesEdited = get_bus_route_json("Manchester")  # Edit original bus routes.
-manchesterRoutesEdited = remove_bus_route(manchesterRoutesEdited, "Pregenerated-0")
-run_full_evaluation(
-    30,
-    "app/data_files/Datasets/Manchester/AllBusStopData.json",
-    manchesterRoutesOriginal,
-    manchesterRoutesEdited,
-)
+if __name__ == "__main__":
+    manchesterRoutesOriginal = get_bus_route_json("Manchester")  # Get original bus routes.
+    manchesterRoutesEdited = get_bus_route_json("Manchester")  # Edit original bus routes.
+    manchesterRoutesEdited = remove_bus_route(manchesterRoutesEdited, "Pregenerated-0")
+    run_full_evaluation(
+        30,
+        "app/data_files/Datasets/Manchester/AllBusStopData.json",
+        manchesterRoutesOriginal,
+        manchesterRoutesEdited,
+    )
 
-# Runtime of entire script
-end_time = time.time()
-print(f"\nEntire script run in total time {sec_to_hmsms(end_time - start_time)}\n\n")
+    # Runtime of entire script
+    end_time = time.time()
+    print(f"\nEntire script run in total time {sec_to_hmsms(end_time - start_time)}\n\n")
