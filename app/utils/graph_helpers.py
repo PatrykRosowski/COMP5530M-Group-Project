@@ -81,7 +81,7 @@ def get_shape_for_stop_sequence(G: nx.DiGraph, node_ids: list[str]) -> str:
         location_type = "break"
 
         if 0 < i < len(node_ids) - 1:
-            location_type = "through"  # use 'through' mode for intermediate stops
+            location_type = "break"  # use 'through' mode for intermediate stops
 
         locations.append(
             {
@@ -109,9 +109,22 @@ def get_shape_for_stop_sequence(G: nx.DiGraph, node_ids: list[str]) -> str:
             else:
                 all_coordinates.extend(geojson_points)
 
+        stops = []
+        for node in node_ids:
+            node_data = G.nodes[node]
+            stops.append(
+                {
+                    "id": node,
+                    "name": node_data.get("CommonName", ""),
+                    "street": node_data.get("Street", ""),
+                    "lat": node_data["Latitude"],
+                    "lng": node_data["Longitude"],
+                }
+            )
+
         return {
             "type": "Feature",
-            "properties": {"order": node_ids},
+            "properties": {"order": node_ids, "stops": stops},
             "geometry": {"type": "LineString", "coordinates": all_coordinates},
         }
 

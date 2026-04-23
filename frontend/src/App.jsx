@@ -1,9 +1,9 @@
-import React from 'react'
-import MapComponent from './MapComponent'
+import BusNetworkMap from './BusNetworkMap.jsx'
+import './App.css'
 
 function App() {
   return (
-    <MapComponent />
+    <BusNetworkMap />
   )
 }
 

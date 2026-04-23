@@ -7,7 +7,8 @@ services:
     volumes:
       - ./routing_engine:/custom_files
     environment:
-      - tile_urls=https://download.geofabrik.de/europe/united-kingdom/england/north-yorkshire-latest.osm.pbf
+      - tile_urls=https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester-latest.osm.pbf
       - build_elevation=False
       - build_admins=False
       - build_time_zones=False
+      - force_rebuild=True
