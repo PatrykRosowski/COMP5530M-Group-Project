@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
@@ -12,13 +12,7 @@ const INITIAL_ROUTES = [
     id: 'L1',
     name: 'Line 1',
     visible: true,
-    coordinates: [[53.79725, -1.54384], [53.80100, -1.54800], [53.80500, -1.55200]]
-  },
-  {
-    id: 'L2',
-    name: 'Line 2',
-    visible: true,
-    coordinates: [[53.79725, -1.54384], [53.79200, -1.54000], [53.78800, -1.53500]]
+    coordinates: [[53.47941, -2.24464], [53.48500, -2.25000], [53.49000, -2.25500]]
   }
 ];
 
@@ -83,6 +77,7 @@ const RouteTag = ({ color, label }) => (
 const BusNetworkMap = () => {
   const [routes, setRoutes] = useState([]);
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetch('http://127.0.0.1:5000/api/routes')
@@ -108,9 +103,62 @@ const BusNetworkMap = () => {
     navigate('/evaluate', { state: { activeRoutes: routes } });
   };
 
+  const handleAddRouteClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        
+        // Format the route data for the map
+        // Handle both direct coordinates and GeoJSON LineString
+        let coordinates = [];
+        if (json.geometry && json.geometry.type === 'LineString') {
+          // GeoJSON uses [lng, lat], Leaflet uses [lat, lng]
+          coordinates = json.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        } else if (json.coordinates) {
+          coordinates = json.coordinates;
+        }
+
+        const newRoute = {
+          id: json.id || `L${routes.length + 1}`,
+          name: json.name || `Uploaded Line ${routes.length + 1}`,
+          visible: true,
+          coordinates: coordinates,
+          properties: json.properties || {}
+        };
+
+        if (coordinates.length > 0) {
+          setRoutes(prev => [...prev, newRoute]);
+        } else {
+          alert('Could not find valid coordinates in the JSON file.');
+        }
+      } catch (err) {
+        console.error('Failed to parse route JSON:', err);
+        alert('Invalid JSON file format.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input value so the same file can be uploaded again
+    event.target.value = '';
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#E2E8F0]">
       <NavBar className="absolute top-5 left-5 z-20 w-80" />
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept=".json"
+        className="hidden"
+      />
       <MapContainer
         center={[53.47941, -2.24464]}
         zoom={13}
@@ -124,7 +172,7 @@ const BusNetworkMap = () => {
         <MapResizer />
         {routes.filter(r => r.visible).map((route, index) => (
           <Polyline
-            key={`route-${route.id}`}
+            key={`route-${route.id}-${index}`}
             positions={route.coordinates}
             pathOptions={{
               color: ROUTE_COLORS[index % ROUTE_COLORS.length],
@@ -155,7 +203,7 @@ const BusNetworkMap = () => {
 
             {routes.map((route, index) => (
               <div
-                key={route.id}
+                key={`${route.id}-${index}`}
                 className="group flex items-center justify-between py-3 px-4 rounded-xl hover:bg-slate-50 transition-all duration-200 border border-transparent hover:border-slate-100"
               >
                 <div className="flex items-center gap-3">
@@ -205,7 +253,10 @@ const BusNetworkMap = () => {
         </div>
 
         <div className="flex flex-col gap-2.5">
-          <button className="w-full py-3 px-4 bg-white hover:bg-slate-50 text-slate-600 border-2 border-slate-200 hover:border-cyan-300 hover:text-cyan-600 text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
+          <button 
+            onClick={handleAddRouteClick}
+            className="w-full py-3 px-4 bg-white hover:bg-slate-50 text-slate-600 border-2 border-slate-200 hover:border-cyan-300 hover:text-cyan-600 text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+          >
             <PlusIcon />
             Add Route
           </button>
