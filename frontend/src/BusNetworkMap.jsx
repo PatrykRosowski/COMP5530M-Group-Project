@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, useMap, Tooltip } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 
@@ -131,7 +131,12 @@ const BusNetworkMap = () => {
               weight: 5,
               opacity: 0.85,
             }}
-          />
+          >
+            <Tooltip sticky>
+              <div className="font-semibold">{route.name}</div>
+              <div className="text-xs text-slate-500">Route ID: {route.id}</div>
+            </Tooltip>
+          </Polyline>
         ))}
       </MapContainer>
 
