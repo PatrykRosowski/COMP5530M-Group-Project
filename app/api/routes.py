@@ -5,6 +5,8 @@ import json
 from app.business_logic.orchestrator import route_calculation
 from app.evaluation.SolutionTesting import run_full_evaluation
 from app.data.Dataset_GenerateBusAccessNodeGraph import get_bus_route_json
+from app.data.Dataset_GenerateBusAccessNodeGraph import add_bus_route
+from app.data.GetAccessNodes import get_specific_stop_data
 
 api_bp = Blueprint("api", __name__)
 CORS(api_bp)
@@ -69,17 +71,35 @@ def get_evaluation_stats():
         # For simplicity, we compare all routes (as "old") vs selected routes (as "new")
         # Or if we want to just evaluate the selected ones, we can use filtered for both or adjust pipeline
         filtered_routes = [r for r in all_routes if r["RouteName"] in active_route_names]
+        filtered_routes_name = [r["RouteName"] for r in filtered_routes]
         
+        # Add any new routes to the all_routes json.
+        new_routes_name = [r for r in active_route_names if r not in filtered_routes_name]
+        new_routes = [r for r in active_routes_info if r["name"] in new_routes_name]
+        # Add the new routes to the all_routes file.
+        for route in new_routes:
+            busStopList = []
+            for i in range(len(route["node_ids"])):
+                atcoCode = route["node_ids"][i]
+                # Get bus stop data.
+                busStopData = get_specific_stop_data([atcoCode])
+                busStopList.append({"ATCOCode": str(atcoCode),
+                                    "Latitude": busStopData.Latitude.values[0],
+                                    "Longitude": busStopData.Longitude.values[0]})
+            # Add the route.
+            all_routes = add_bus_route(all_routes, route["name"], busStopList)
+
         # If no routes are active, we might want to return empty or error
         if not filtered_routes:
              return jsonify({"error": "No active routes selected"}), 400
 
+        print(f"Length of routes being passed: {len(all_routes)}")
         # Run the full evaluation pipeline (using a small number of pairs for speed in demo)
         eval_result = run_full_evaluation(
-            num_of_HM_pairs=10, # Reduced for responsiveness
+            num_of_HM_pairs=300, # Reduced for responsiveness
             network_json_stops="app/data_files/Datasets/Manchester/AllBusStopData.json",
             old_network_json_routes=all_routes,
-            new_network_json_routes=filtered_routes,
+            new_network_json_routes=all_routes,
         )
         
         stats = eval_result["new_graph_stats"]

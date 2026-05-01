@@ -31,15 +31,21 @@ def get_bus_access_node_graph(stop_json_filepath, route_json):
 
             # break # Uncomment to only view 1st file bus stops
 
-    # Extracting AccessNode data from ATCO Codes
-    busData = get_specific_stop_data(busCodes)
-
     ## -- Bus Routes -- ##
 
     # List of consecutive routes :
     routesList = []
     for route in route_json:
         routesList.append(route["Route"])
+
+    # Adding bus route stops into bus codes if it doesnt already exist
+    for route in routesList:
+        for stop in route:
+            if stop["ATCOCode"] not in busCodes:
+                busCodes.append(stop["ATCOCode"])
+
+    # Extracting AccessNode data from ATCO Codes
+    busData = get_specific_stop_data(busCodes)
 
     ## -- Populating AccessNode Graph -- ##
 

@@ -166,7 +166,6 @@ def run_full_evaluation(
     old_network_json_routes,
     new_network_json_routes,
 ):
-
     old_graph = get_bus_access_node_graph(network_json_stops, old_network_json_routes)
     new_graph = get_bus_access_node_graph(network_json_stops, new_network_json_routes)
 
@@ -245,6 +244,7 @@ def run_full_evaluation(
         newg_solutions
     )  # solution-based metrics
 
+    print("3")
     old_graph_stats_json = {
         'graph name': str('"')+'Existing Bus Network'+str('"'),
         'number of vertices': f"{oldg_graph_stats_array[4]:,}",

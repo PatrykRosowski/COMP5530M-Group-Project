@@ -184,6 +184,7 @@ const BusNetworkMap = () => {
           name: data.name || `Line ${routes.length + 1}`,
           visible: true,
           coordinates: coords,
+          node_ids: data.properties.order,
         };
 
         if (newRoute.coordinates.length > 0) {
