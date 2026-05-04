@@ -160,6 +160,79 @@ def evaluate_graph(graph, graph_name_string):
     return graph_stats_json
 
 
+def evaluate_1_network(num_of_HM_pairs, network_json_stops, network_json_routes, network_name = "My_Network"):
+
+    graph = get_bus_access_node_graph(network_json_stops, network_json_routes)
+    
+    graph_stats_array = get_all_graph_statistics(graph)  # graph-based metrics
+    
+    heatmap_points = get_heatmap_pairs(num_of_HM_pairs)
+
+    graph, testing_points = add_heatmap_points_to_graph(graph, heatmap_points)
+    
+    graph = add_walking_paths(graph)
+    
+    edge_weight_dict, solutions = {}, {} # solutions = solution path, weight, cost
+
+    index = 0
+    for point in range(len(testing_points)):
+
+        pair = testing_points[point]
+        index += 1
+
+        solution_path, total_weight, total_cost = Shortest_Path_Simulation(graph, pair[0], pair[1], edge_weight_dict)
+        solutions[index] = (solution_path, total_weight, total_cost)
+        
+        # my_print(str(index) + ".. ")
+
+    # Printing Solutions :
+    # count = 0
+    # for i in oldg_solutions:
+    #     count+=1
+    #     print(f"File {count}: weight = {oldg_solutions[i][1]:.2f}, path-cost = {oldg_solutions[i][2]:.4f}")
+    # print()
+    # count = 0
+    # for j in newg_solutions:
+    #     count+=1
+    #     print(f"File {count}: weight = {newg_solutions[j][1]:.2f}, path-cost = {newg_solutions[j][2]:.4f}")
+    # print()
+
+    delete = [j for j in solutions if solutions[j][1] == float("inf") or solutions[j][1] == 0]
+    for journey in delete:
+        del solutions[journey]
+
+    solution_stats_array = get_all_solution_statistics(solutions) # solution-based metrics
+    total_journeys = sum(solutions)
+
+    graph_stats_json = {
+        'graph name': str('"') + network_name + str('"'),
+        'number of vertices': f"{graph_stats_array[4]:,}",
+        'number of edges': f"{graph_stats_array[5]:,}",
+        'average degree (number of busses passing through stop)': f"{graph_stats_array[6]:.2f}",
+        #'graph radius (minimum eccentricity)': f"{oldg_graph_stats_array[2]} nodes",
+        'graph diameter (maximum eccentricity)': f"{graph_stats_array[3]} nodes",
+        'maximum degree centrality': f"{graph_stats_array[0]:.6f}",
+        'number of nodes with 90%+ of max degree centrality': graph_stats_array[1],
+        "total journeys attempted": total_journeys,
+        'valid journeys_computed': len(solutions),
+        'mean travel time': f"{solution_stats_array[0]:,.3f} seconds",
+        'median travel time': f"{solution_stats_array[1]:,.3f} seconds",
+        'average number of busses per journey': f"{solution_stats_array[2]:.1f} per trip",
+        'shortest journey time': f"{solution_stats_array[3]:,.3f} seconds",
+        'average time of shortest 10% of journeys': f"{solution_stats_array[4]:,.3f} seconds",
+        'longest journey time': f"{solution_stats_array[5]:,.3f} seconds",
+        'average time of longest 10% of journeys': f"{solution_stats_array[6]:,.3f} seconds"
+    }
+
+    # Printing json output :
+    print(f"\x7b\ngraph_stats_json :")
+    for i in graph_stats_json:
+        print(f"\t\x7b {i}: {graph_stats_json[i]} \x7d")
+    print("}")   
+
+    return graph_stats_json
+
+
 def run_full_evaluation(
     num_of_HM_pairs,
     network_json_stops,
@@ -458,12 +531,14 @@ if __name__ == "__main__":
     manchesterRoutesOriginal = get_bus_route_json("Manchester")  # Get original bus routes.
     manchesterRoutesEdited = get_bus_route_json("Manchester")  # Edit original bus routes.
     manchesterRoutesEdited = remove_bus_route(manchesterRoutesEdited, "Pregenerated-0")
+    '''
     run_full_evaluation(
         30,
         "app/data_files/Datasets/Manchester/AllBusStopData.json",
         manchesterRoutesOriginal,
         manchesterRoutesEdited,
-    )
+    )'''
+    evaluate_1_network(30, "app/data_files/Datasets/Manchester/AllBusStopData.json", manchesterRoutesOriginal)
 
     # Runtime of entire script
     end_time = time.time()
