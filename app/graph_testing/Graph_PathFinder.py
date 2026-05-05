@@ -57,7 +57,7 @@ def cached_path_cost(edge_weight, cur_mode, cur_route, prev_mode, prev_route, no
 
 
 BUS_WAITING_COST = 15 * 60 # 15 mins x 60 seconds
-MODE_CHANGE_PUNISHER = 100 # Punishes for changing busses
+MODE_CHANGE_PUNISHER = 15000 # Punishes for changing busses
 
 def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
 
@@ -77,7 +77,7 @@ def path_cost(edge_weight, nodeData, prev_mode, node_mode_num):
         "bus": 1,
         "tram": 1,
         "walk": 30,
-        "change": 100,  # waiting-time penalty for a new bus
+        "change": 150,  # waiting-time penalty for a new bus
     }
     Bus_Waiting_Cost = BUS_WAITING_COST  # waiting-time for a bus
 
